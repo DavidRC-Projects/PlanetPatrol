@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlanetPatrol Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>PlanetPatrol Dashboard</h1>
+
+  <div id="loading" class="loading">Loading data...</div>
+  <div id="error" class="error" style="display:none;"></div>
+
+  <div id="dashboard" style="display:none;">
+    <div class="cards">
+      <div class="card"><span class="value" id="totalPieces">0</span><div class="label">Total litter collected</div></div>
+      <div class="card"><span class="value" id="moderated">0</span><div class="label">Moderated</div></div>
+      <div class="card"><span class="value" id="unmoderated">0</span><div class="label">Unmoderated</div></div>
+      <div class="card"><span class="value" id="totalPhotos">0</span><div class="label">Total photos</div></div>
+    </div>
+
+    <div class="filters">
+      <label>Status: <select id="filterStatus"><option value="all">All</option><option value="moderated">Moderated</option><option value="unmoderated">Unmoderated</option></select></label>
+      <label>Min pieces: <input type="number" id="filterMinPieces" min="0" value="0"></label>
+      <label>Year: <select id="filterYear"><option value="">All</option></select></label>
+      <label>Month: <select id="filterMonth"><option value="">All</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select></label>
+      <label>Week: <select id="filterWeek"><option value="">All</option></select></label>
+      <button id="applyFilters" type="button">Apply filters</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
