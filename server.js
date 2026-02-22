@@ -10,13 +10,40 @@ const SERVICE_ACCOUNT_PATH = process.env.SERVICE_ACCOUNT_PATH
   ? path.resolve(process.env.SERVICE_ACCOUNT_PATH)
   : path.join(ROOT_DIR, 'plastic-patrol-fd3b3-firebase-adminsdk-wzxjy-d21b2320fa.json');
 
-if (!fs.existsSync(SERVICE_ACCOUNT_PATH)) {
-  console.error(`Missing Firebase service account file: ${SERVICE_ACCOUNT_PATH}`);
+function parseJsonCredential(raw) {
+  try {
+    return JSON.parse(raw);
+  } catch (_) {
+    return null;
+  }
+}
+
+function loadServiceAccountCredential() {
+  if (fs.existsSync(SERVICE_ACCOUNT_PATH)) {
+    return require(SERVICE_ACCOUNT_PATH);
+  }
+
+  const rawSecret = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (!rawSecret) {
+    console.error(`Missing Firebase service account file: ${SERVICE_ACCOUNT_PATH}`);
+    console.error('Missing FIREBASE_SERVICE_ACCOUNT_JSON environment variable.');
+    process.exit(1);
+  }
+
+  const parsed = parseJsonCredential(rawSecret);
+  if (parsed) return parsed;
+
+  // Some secret managers store JSON as base64 to preserve formatting.
+  const decoded = Buffer.from(rawSecret, 'base64').toString('utf8');
+  const parsedDecoded = parseJsonCredential(decoded);
+  if (parsedDecoded) return parsedDecoded;
+
+  console.error('FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON (raw or base64).');
   process.exit(1);
 }
 
 admin.initializeApp({
-  credential: admin.credential.cert(require(SERVICE_ACCOUNT_PATH))
+  credential: admin.credential.cert(loadServiceAccountCredential())
 });
 
 const db = admin.firestore();
