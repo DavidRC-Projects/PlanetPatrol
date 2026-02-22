@@ -1,14 +1,45 @@
 # PlanetPatrol
 
-Dashboard for Plastic Patrol API data.
+Dashboard for Plastic Patrol litter data.
+
+## Data loading
+
+The dashboard loads Firestore data through the local server endpoint (`/api/photos`).
+This ensures unmoderated records are included.
+
+The frontend expects API responses in this format:
+
+```json
+{
+  "photos": {
+    "<docId>": { "...": "..." }
+  }
+}
+```
+
+If the API returns any other shape, the app shows an error message.
+
+## Structure
+
+```
+js/
+├── config.js          # URLs and DOM_IDS
+├── dom.js             # getElement, getElements, hasRequiredElements
+├── photo-helpers.js   # getPieces, isModerated, getPhotoDate
+├── date-utils.js      # matchesYear, matchesMonth
+├── stats.js           # sumTotalPieces, countModerated, countUnmoderated
+├── filter-rules.js      # passesStatusFilter, passesPiecesFilter, passesDateFilter
+├── api.js             # fetchData and API payload validation
+├── render.js          # renderCards
+├── filters.js         # filterPhotos, getFilterValues, populateYearOptions, applyFilters
+└── app.js             # init, showLoading, showDashboard, showError, bindFilterButton
+```
 
 ## Run
 
-Open `index.html` in a browser. If CORS blocks the API, run a local server:
-
 ```bash
-npx serve .
-# or: python -m http.server 8000
+npm install
+npm start
 ```
 
-Then visit `http://localhost:3000` (or `:8000`).
+Then open `http://localhost:8787`.

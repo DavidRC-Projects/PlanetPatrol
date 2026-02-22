@@ -1,13 +1,83 @@
 * { box-sizing: border-box; }
 
+.hidden { display: none; }
+
 body {
   font-family: system-ui, sans-serif;
   margin: 0;
   padding: 1rem;
-  background: #f5f5f5;
+  background:
+    radial-gradient(circle at 5% 0%, rgba(34, 197, 94, 0.12), transparent 38%),
+    radial-gradient(circle at 95% 0%, rgba(14, 165, 233, 0.14), transparent 42%),
+    #f5f7f8;
 }
 
-h1 { margin: 0 0 1rem; }
+.brand-header {
+  margin: 0 0 1rem;
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
+  background: linear-gradient(120deg, #0f766e 0%, #15803d 48%, #0ea5e9 100%);
+  box-shadow: 0 10px 26px rgba(15, 118, 110, 0.2);
+  color: #f0fdf4;
+}
+
+.brand-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.brand-title {
+  margin: 0.5rem 0 0;
+  font-size: clamp(1.55rem, 2.8vw, 2.3rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.brand-subtitle {
+  margin: 0.45rem 0 0;
+  font-size: 0.96rem;
+  max-width: 52ch;
+  color: rgba(240, 253, 244, 0.94);
+}
+
+.country-box {
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.country-current {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  margin-bottom: 0.45rem;
+}
+
+.country-flag {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.country-box label {
+  font-size: 0.9rem;
+}
+
+.country-box select {
+  margin-left: 0.35rem;
+  padding: 0.3rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
 
 .cards {
   display: flex;
@@ -74,12 +144,154 @@ h1 { margin: 0 0 1rem; }
 
 .filters button:hover { background: #084d2a; }
 
-.error {
-  color: #c00;
+.panel {
+  background: white;
   padding: 1rem;
-  background: #fdd;
   border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-bottom: 1rem;
 }
 
-.loading { color: #666; padding: 1rem; }
+.panel h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+}
+
+.panel h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+}
+
+.panel-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.rank-list {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.rank-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.25rem;
+}
+
+.item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-count {
+  color: #0a6d3d;
+  font-weight: 700;
+}
+
+.muted {
+  color: #666;
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.photo-list {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.photo-row {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #ececec;
+}
+
+.row-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.row-date {
+  font-weight: 600;
+}
+
+.row-id {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.row-meta {
+  margin: 0.2rem 0;
+  color: #222;
+  font-size: 0.9rem;
+}
+
+.empty {
+  color: #666;
+  font-style: italic;
+}
+
+.status-page {
+  max-width: 720px;
+  margin: 2.5rem auto;
+  padding: 1.5rem;
+  background: #fff;
+  border: 1px solid #f1b4b4;
+  border-radius: 10px;
+  color: #8a1c1c;
+}
+
+.status-page h2 {
+  margin: 0 0 0.6rem;
+}
+
+.status-page p {
+  margin: 0;
+}
+
+.loading {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(245, 247, 248, 0.88);
+  backdrop-filter: blur(3px);
+}
+
+.loading-card {
+  min-width: 250px;
+  max-width: 320px;
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(15, 118, 110, 0.18);
+  border: 1px solid rgba(15, 118, 110, 0.12);
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 0.7rem;
+  border-radius: 50%;
+  border: 3px solid #d1fae5;
+  border-top-color: #0f766e;
+  animation: loading-spin 0.85s linear infinite;
+}
+
+.loading-text {
+  margin: 0;
+  color: #2f3f3a;
+  font-weight: 600;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

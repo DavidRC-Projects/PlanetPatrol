@@ -1,0 +1,79 @@
+/** App entry point. Loads data and wires UI controls. */
+const appState = { photos: {}, locationDictionary: {} };
+
+function setDisplay(id, value) {
+  const el = getElement(id);
+  if (el) el.style.display = value;
+}
+
+/** Sets loading/dashboard/error sections. */
+function setViewState({ loading, dashboard, error, errorMessage = '' }) {
+  setDisplay(DOM_IDS.loading, loading);
+  setDisplay(DOM_IDS.dashboard, dashboard);
+  setDisplay(DOM_IDS.error, error);
+  const errorEl = getElement(DOM_IDS.errorMessage);
+  if (errorEl) errorEl.textContent = errorMessage;
+}
+
+function showDashboard() {
+  setViewState({ loading: 'none', dashboard: 'block', error: 'none' });
+}
+
+function showError(message) {
+  setViewState({ loading: 'none', dashboard: 'none', error: 'block', errorMessage: message });
+}
+
+function bindFilterAutoRefresh() {
+  const ids = [
+    DOM_IDS.filterStatus,
+    DOM_IDS.filterMinPieces,
+    DOM_IDS.filterYear,
+    DOM_IDS.filterMonth,
+    DOM_IDS.filterCountry,
+    DOM_IDS.filterBrandLabelSearch
+  ];
+  const els = getElements(ids);
+  for (const id of ids) {
+    const el = els[id];
+    if (!el) continue;
+    const isTextSearch = id === DOM_IDS.filterBrandLabelSearch;
+    const eventName = isTextSearch ? 'input' : 'change';
+    el.addEventListener(eventName, () => { void applyFilters(appState.photos, appState.locationDictionary); });
+  }
+}
+
+function warmLocationDictionary(photos) {
+  try {
+    appState.locationDictionary = loadLocationDictionary();
+  } catch (_) {
+    appState.locationDictionary = {};
+  }
+
+  // Build missing coordinate labels in background without blocking dashboard render.
+  void getOrBuildLocationDictionary(photos)
+    .then((dictionary) => {
+      appState.locationDictionary = dictionary;
+      void applyFilters(appState.photos, appState.locationDictionary);
+    })
+    .catch(() => {
+      // Keep app usable even if reverse geocoding fails.
+    });
+}
+
+async function init() {
+  const required = [DOM_IDS.loading, DOM_IDS.dashboard, DOM_IDS.error];
+  if (!hasRequiredElements(required)) return;
+
+  try {
+    appState.photos = (await fetchData()).photos;
+    warmLocationDictionary(appState.photos);
+    showDashboard();
+    populateYearOptions(appState.photos);
+    bindFilterAutoRefresh();
+    void applyFilters(appState.photos, appState.locationDictionary);
+  } catch (error) {
+    showError(error.message || 'We could not load data from the API. Please try again shortly.');
+  }
+}
+
+init();

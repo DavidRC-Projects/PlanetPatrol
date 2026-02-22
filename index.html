@@ -7,29 +7,76 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>PlanetPatrol Dashboard</h1>
+  <header class="brand-header">
+    <div class="brand-chip">Planet Patrol</div>
+    <h1 class="brand-title">PlanetPatrol Dashboard</h1>
+  </header>
 
-  <div id="loading" class="loading">Loading data...</div>
-  <div id="error" class="error" style="display:none;"></div>
+  <div id="loading" class="loading" role="status" aria-live="polite">
+    <div class="loading-card">
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <p class="loading-text">Loading dashboard data...</p>
+    </div>
+  </div>
+  <section id="error" class="status-page hidden">
+    <h2>Unable to load dashboard data</h2>
+    <p id="errorMessage">We could not pull data from the database. Please try again in a moment.</p>
+  </section>
 
-  <div id="dashboard" style="display:none;">
+  <div id="dashboard" class="hidden">
     <div class="cards">
       <div class="card"><span class="value" id="totalPieces">0</span><div class="label">Total litter collected</div></div>
-      <div class="card"><span class="value" id="moderated">0</span><div class="label">Moderated</div></div>
-      <div class="card"><span class="value" id="unmoderated">0</span><div class="label">Unmoderated</div></div>
+      <div class="card"><span class="value" id="unmoderatedPieces">0</span><div class="label">Unmoderated litter collected</div></div>
+      <div class="card"><span class="value" id="moderated">0</span><div class="label">Moderated photos</div></div>
+      <div class="card"><span class="value" id="unmoderated">0</span><div class="label">Unmoderated photos</div></div>
       <div class="card"><span class="value" id="totalPhotos">0</span><div class="label">Total photos</div></div>
+      <section class="card country-box">
+        <div class="country-current">
+          <span id="countryFlag" class="country-flag" aria-hidden="true">🌍</span>
+          <span id="countryName">All countries</span>
+        </div>
+        <label>Country:
+          <select id="filterCountry">
+            <option value="">All countries</option>
+          </select>
+        </label>
+      </section>
     </div>
 
     <div class="filters">
       <label>Status: <select id="filterStatus"><option value="all">All</option><option value="moderated">Moderated</option><option value="unmoderated">Unmoderated</option></select></label>
       <label>Min pieces: <input type="number" id="filterMinPieces" min="0" value="0"></label>
       <label>Year: <select id="filterYear"><option value="">All</option></select></label>
-      <label>Month: <select id="filterMonth"><option value="">All</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select></label>
-      <label>Week: <select id="filterWeek"><option value="">All</option></select></label>
-      <button id="applyFilters" type="button">Apply filters</button>
+      <label>Month (within selected year): <select id="filterMonth"><option value="">All</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select></label>
+      <label>Brand/Label: <input id="filterBrandLabelSearch" type="text" placeholder="Type exact brand or label" autocomplete="off"></label>
     </div>
+
+    <section class="panel">
+      <h2>Most Collected (Top 50)</h2>
+      <div class="panel-grid">
+        <div>
+          <h3>Brands</h3>
+          <ol id="topBrandsList" class="rank-list"></ol>
+        </div>
+        <div>
+          <h3>Labels</h3>
+          <ol id="topLabelsList" class="rank-list"></ol>
+        </div>
+      </div>
+    </section>
+
   </div>
 
-  <script src="app.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/dom.js"></script>
+  <script src="js/photo-helpers.js"></script>
+  <script src="js/location.js"></script>
+  <script src="js/date-utils.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/filter-rules.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/filters.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
