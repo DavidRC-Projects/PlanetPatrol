@@ -5,6 +5,7 @@ const admin = require('firebase-admin');
 
 const PORT = Number(process.env.PORT) || 8787;
 const ROOT_DIR = __dirname;
+const PHOTOS_CACHE_TTL_MS = Number(process.env.PHOTOS_CACHE_TTL_MS) || 5 * 60 * 1000;
 const SERVICE_ACCOUNT_PATH = process.env.SERVICE_ACCOUNT_PATH
   ? path.resolve(process.env.SERVICE_ACCOUNT_PATH)
   : path.join(ROOT_DIR, 'plastic-patrol-fd3b3-firebase-adminsdk-wzxjy-d21b2320fa.json');
@@ -19,6 +20,8 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+let photosCache = { payload: null, expiresAt: 0 };
+let inflightPhotosFetch = null;
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -54,6 +57,36 @@ async function fetchFirestorePhotos() {
   return { photos };
 }
 
+async function getPhotosWithCache() {
+  const now = Date.now();
+  if (photosCache.payload && photosCache.expiresAt > now) {
+    return photosCache.payload;
+  }
+
+  if (inflightPhotosFetch) {
+    return inflightPhotosFetch;
+  }
+
+  inflightPhotosFetch = (async () => {
+    try {
+      const payload = await fetchFirestorePhotos();
+      photosCache = {
+        payload,
+        expiresAt: Date.now() + PHOTOS_CACHE_TTL_MS
+      };
+      return payload;
+    } catch (error) {
+      // Return stale data if available; this keeps dashboard alive during transient outages.
+      if (photosCache.payload) return photosCache.payload;
+      throw error;
+    } finally {
+      inflightPhotosFetch = null;
+    }
+  })();
+
+  return inflightPhotosFetch;
+}
+
 function sendJson(res, statusCode, body) {
   res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(body));
@@ -83,7 +116,7 @@ function resolveStaticPath(urlPath) {
 const server = http.createServer(async (req, res) => {
   if (req.url && req.url.startsWith('/api/photos')) {
     try {
-      const payload = await fetchFirestorePhotos();
+      const payload = await getPhotosWithCache();
       sendJson(res, 200, payload);
     } catch (error) {
       sendJson(res, 500, { error: `Firestore read failed: ${error.message}` });

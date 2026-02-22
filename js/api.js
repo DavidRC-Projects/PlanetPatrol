@@ -1,23 +1,35 @@
-const FETCH_TIMEOUT_MS = 12000;
+const FETCH_TIMEOUT_MS = 30000;
+const RETRY_TIMEOUT_MS = 60000;
+const MAX_ATTEMPTS = 2;
 
 /** Loads data from the API proxy only. */
 async function fetchData() {
-  try {
-    return await tryFirestoreProxy();
-  } catch (error) {
-    throw new Error(error?.message || 'Unable to load API data.');
+  let lastError = null;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const timeoutMs = attempt === 1 ? FETCH_TIMEOUT_MS : RETRY_TIMEOUT_MS;
+      return await tryFirestoreProxy(timeoutMs);
+    } catch (error) {
+      lastError = error;
+      if (attempt < MAX_ATTEMPTS) {
+        // Brief delay before retry to allow cold starts or transient Firestore slowness.
+        await delay(1200);
+      }
+    }
   }
+
+  throw new Error(lastError?.message || 'Unable to load API data.');
 }
 
 /** Tries local server Firestore proxy source. */
-async function tryFirestoreProxy() {
-  return fetchAndNormalize(FIRESTORE_PROXY_URL);
+async function tryFirestoreProxy(timeoutMs) {
+  return fetchAndNormalize(FIRESTORE_PROXY_URL, timeoutMs);
 }
 
 /** Fetches JSON from URL and validates expected payload shape. */
-async function fetchAndNormalize(url) {
+async function fetchAndNormalize(url, timeoutMs) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(url, { signal: controller.signal });
     if (!res.ok) throw new Error(`API request failed (${res.status}).`);
@@ -38,6 +50,10 @@ async function fetchAndNormalize(url) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /** Returns dataset only when it has photos. */
