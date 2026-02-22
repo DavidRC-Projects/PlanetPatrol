@@ -1,0 +1,24 @@
+# Firebase config (contains API keys)
+js/firebase-config.json
+
+# Firebase service account keys (private)
+*-firebase-adminsdk-*.json
+plastic-patrol-fd3b3-firebase-adminsdk-wzxjy-d21b2320fa.json
+node_modules/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# macOS
+.DS_Store
+
+# Test coverage
+coverage/
+exports/location-resolutions.json
