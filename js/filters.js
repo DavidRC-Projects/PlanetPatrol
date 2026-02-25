@@ -1,5 +1,5 @@
 /** Filter logic and UI state extraction. */
-function filterPhotos(photos, locationDictionary, country, status, minPieces, year, month, brandLabelSearch) {
+function filterPhotos(photos, locationDictionary, country, status, minPieces, year, month, day, brandLabelSearch) {
   photos = photos || {};
   const normalizedBrandLabelSearch = normalizeBrandLabelSearch(brandLabelSearch);
   const out = {};
@@ -9,7 +9,7 @@ function filterPhotos(photos, locationDictionary, country, status, minPieces, ye
     if (country && countryInfo.countryKey !== country) continue;
     if (!passesStatusFilter(photo, status)) continue;
     if (!passesPiecesFilter(photo, minPieces)) continue;
-    if (!passesDateFilter(photo, year, month)) continue;
+    if (!passesDateFilter(photo, year, month, day)) continue;
     if (!passesBrandLabelFilter(photo, brandLabelSearch)) continue;
     if (!normalizedBrandLabelSearch) {
       out[id] = photo;
@@ -33,6 +33,7 @@ function getFilterValues() {
     DOM_IDS.filterMinPieces,
     DOM_IDS.filterYear,
     DOM_IDS.filterMonth,
+    DOM_IDS.filterDay,
     DOM_IDS.filterCountry,
     DOM_IDS.filterBrandLabelSearch
   ];
@@ -43,6 +44,7 @@ function getFilterValues() {
     minPieces: Math.max(0, parseInt(els[DOM_IDS.filterMinPieces].value, 10) || 0),
     year: els[DOM_IDS.filterYear].value,
     month: els[DOM_IDS.filterMonth].value,
+    day: els[DOM_IDS.filterDay].value,
     country: els[DOM_IDS.filterCountry].value,
     brandLabelSearch: els[DOM_IDS.filterBrandLabelSearch].value
   };
@@ -54,7 +56,12 @@ function populateYearOptions(photos) {
   const years = new Set();
   for (const id of Object.keys(photos)) {
     const d = getPhotoDate(photos[id]);
-    if (d) years.add(d.getFullYear());
+    if (!d) continue;
+    const year = d.getFullYear();
+    // Hide 1970 in the dropdown: this typically comes from missing/invalid timestamps that
+    // parse to the Unix epoch, and it clutters the filter UI.
+    if (year === 1970) continue;
+    years.add(year);
   }
   const el = getElement(DOM_IDS.filterYear);
   if (!el) return;
@@ -112,6 +119,7 @@ async function applyFilters(photos, locationDictionary) {
     values.minPieces,
     values.year,
     values.month,
+    values.day,
     values.brandLabelSearch
   );
   await renderFilteredView(filtered);

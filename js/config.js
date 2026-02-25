@@ -17,6 +17,7 @@ const DOM_IDS = {
   filterMinPieces: 'filterMinPieces',
   filterYear: 'filterYear',
   filterMonth: 'filterMonth',
+  filterDay: 'filterDay',
   filterCountry: 'filterCountry',
   filterBrandLabelSearch: 'filterBrandLabelSearch',
   countryFlag: 'countryFlag',

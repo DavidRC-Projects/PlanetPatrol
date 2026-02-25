@@ -18,9 +18,9 @@ function passesPiecesFilter(photo, minPieces) {
 }
 
 /** Returns true if photo passes year/month filters. */
-function passesDateFilter(photo, year, month) {
+function passesDateFilter(photo, year, month, day) {
   const d = getPhotoDate(photo);
-  return matchesYear(d, year) && matchesMonth(d, month);
+  return matchesYear(d, year) && matchesMonth(d, month) && matchesDay(d, day);
 }
 
 /** Returns true if photo matches selected location bucket. */

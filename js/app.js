@@ -1,9 +1,19 @@
 /** App entry point. Loads data and wires UI controls. */
 const appState = { photos: {}, locationDictionary: {} };
 
+/**
+ * Sets section visibility in a way that works for layout + accessibility.
+ * Uses the `hidden` attribute and `.hidden` utility class, and also sets inline display
+ * as a fallback for existing behavior.
+ */
 function setDisplay(id, value) {
   const el = getElement(id);
-  if (el) el.style.display = value;
+  if (!el) return;
+  const isVisible = value !== 'none';
+  el.hidden = !isVisible;
+  el.classList.toggle('hidden', !isVisible);
+  el.setAttribute('aria-hidden', String(!isVisible));
+  el.style.display = isVisible ? '' : 'none';
 }
 
 /** Sets loading/dashboard/error sections. */
@@ -29,6 +39,7 @@ function bindFilterAutoRefresh() {
     DOM_IDS.filterMinPieces,
     DOM_IDS.filterYear,
     DOM_IDS.filterMonth,
+    DOM_IDS.filterDay,
     DOM_IDS.filterCountry,
     DOM_IDS.filterBrandLabelSearch
   ];

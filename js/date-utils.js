@@ -14,3 +14,12 @@ function matchesMonth(d, month) {
   if (isNaN(m)) return true;
   return d.getMonth() + 1 === m;
 }
+
+/** Returns true if date matches day-of-month filter. */
+function matchesDay(d, day) {
+  if (!day) return true;
+  if (!d) return false;
+  const parsed = parseInt(day, 10);
+  if (isNaN(parsed)) return true;
+  return d.getDate() === parsed;
+}
