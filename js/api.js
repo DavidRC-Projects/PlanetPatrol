@@ -21,6 +21,28 @@ async function fetchData() {
   throw new Error(lastError?.message || 'Unable to load API data.');
 }
 
+/** Loads missions data from the API proxy. */
+async function fetchMissions() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(MISSIONS_PROXY_URL, { signal: controller.signal });
+    if (!res.ok) throw new Error(`Missions API request failed (${res.status}).`);
+    const payload = await res.json();
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload) || !payload.missions || typeof payload.missions !== 'object') {
+      throw new Error('Unexpected missions API response format. Expected { missions: { id: mission } }.');
+    }
+    return payload;
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw new Error('Missions API request timed out.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 /** Tries local server Firestore proxy source. */
 async function tryFirestoreProxy(timeoutMs) {
   return fetchAndNormalize(FIRESTORE_PROXY_URL, timeoutMs);

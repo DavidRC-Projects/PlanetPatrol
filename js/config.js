@@ -1,5 +1,6 @@
 /** Data source URLs. */
 const FIRESTORE_PROXY_URL = '/api/photos';
+const MISSIONS_PROXY_URL = '/api/missions';
 const ENABLE_AREA_LOOKUP = true;
 
 /** DOM element IDs. */
@@ -22,6 +23,11 @@ const DOM_IDS = {
   filterBrandLabelSearch: 'filterBrandLabelSearch',
   countryFlag: 'countryFlag',
   countryName: 'countryName',
+  timeSeriesSubtitle: 'timeSeriesSubtitle',
+  timeSeriesChart: 'timeSeriesChart',
+  timeSeriesEmpty: 'timeSeriesEmpty',
+  timeSeriesTooltip: 'timeSeriesTooltip',
+  topMissionsList: 'topMissionsList',
   topBrandsList: 'topBrandsList',
   topLabelsList: 'topLabelsList'
 };

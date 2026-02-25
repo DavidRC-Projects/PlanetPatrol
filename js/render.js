@@ -46,8 +46,16 @@ function renderTopCollections(filtered) {
   labelEl.innerHTML = buildTopListItems(topCategoryTotals(filtered, 'label', 50));
 }
 
+function renderMissionLeaderboard(missions) {
+  const el = getElement(DOM_IDS.topMissionsList);
+  if (!el) return;
+  el.innerHTML = buildTopListItems(topMissionTotals(missions, 20));
+}
+
 /** Renders all filtered dashboard sections. */
-async function renderFilteredView(filtered) {
+async function renderFilteredView(filtered, filters, missions) {
   renderCards(filtered);
+  renderTimeSeries(filtered, filters);
+  renderMissionLeaderboard(missions);
   renderTopCollections(filtered);
 }

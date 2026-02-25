@@ -1,5 +1,5 @@
 /** App entry point. Loads data and wires UI controls. */
-const appState = { photos: {}, locationDictionary: {} };
+const appState = { photos: {}, missions: {}, locationDictionary: {} };
 
 /**
  * Sets section visibility in a way that works for layout + accessibility.
@@ -49,7 +49,7 @@ function bindFilterAutoRefresh() {
     if (!el) continue;
     const isTextSearch = id === DOM_IDS.filterBrandLabelSearch;
     const eventName = isTextSearch ? 'input' : 'change';
-    el.addEventListener(eventName, () => { void applyFilters(appState.photos, appState.locationDictionary); });
+    el.addEventListener(eventName, () => { void applyFilters(appState.photos, appState.locationDictionary, appState.missions); });
   }
 }
 
@@ -64,7 +64,7 @@ function warmLocationDictionary(photos) {
   void getOrBuildLocationDictionary(photos)
     .then((dictionary) => {
       appState.locationDictionary = dictionary;
-      void applyFilters(appState.photos, appState.locationDictionary);
+      void applyFilters(appState.photos, appState.locationDictionary, appState.missions);
     })
     .catch(() => {
       // Keep app usable even if reverse geocoding fails.
@@ -76,12 +76,17 @@ async function init() {
   if (!hasRequiredElements(required)) return;
 
   try {
-    appState.photos = (await fetchData()).photos;
+    const [photoPayload, missionPayload] = await Promise.all([
+      fetchData(),
+      fetchMissions().catch(() => ({ missions: {} }))
+    ]);
+    appState.photos = photoPayload.photos;
+    appState.missions = missionPayload.missions || {};
     warmLocationDictionary(appState.photos);
     showDashboard();
     populateYearOptions(appState.photos);
     bindFilterAutoRefresh();
-    void applyFilters(appState.photos, appState.locationDictionary);
+    void applyFilters(appState.photos, appState.locationDictionary, appState.missions);
   } catch (error) {
     showError(error.message || 'We could not load data from the API. Please try again shortly.');
   }

@@ -6,6 +6,7 @@ const admin = require('firebase-admin');
 const PORT = Number(process.env.PORT) || 8787;
 const ROOT_DIR = __dirname;
 const PHOTOS_CACHE_TTL_MS = Number(process.env.PHOTOS_CACHE_TTL_MS) || 5 * 60 * 1000;
+const MISSIONS_CACHE_TTL_MS = Number(process.env.MISSIONS_CACHE_TTL_MS) || 5 * 60 * 1000;
 const SERVICE_ACCOUNT_PATH = process.env.SERVICE_ACCOUNT_PATH
   ? path.resolve(process.env.SERVICE_ACCOUNT_PATH)
   : path.join(ROOT_DIR, 'plastic-patrol-fd3b3-firebase-adminsdk-wzxjy-d21b2320fa.json');
@@ -49,6 +50,8 @@ admin.initializeApp({
 const db = admin.firestore();
 let photosCache = { payload: null, expiresAt: 0 };
 let inflightPhotosFetch = null;
+let missionsCache = { payload: null, expiresAt: 0 };
+let inflightMissionsFetch = null;
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -84,6 +87,22 @@ async function fetchFirestorePhotos() {
   return { photos };
 }
 
+async function fetchFirestoreMissions() {
+  const snapshot = await db.collection('missions').get();
+  const missions = {};
+  snapshot.forEach((doc) => {
+    // Only return fields needed for the dashboard leaderboard.
+    // This keeps payload small and avoids leaking per-user breakdowns.
+    const data = doc.data() || {};
+    missions[doc.id] = {
+      hidden: data.hidden === true,
+      name: String(data.name || '').trim(),
+      totalPieces: Number(data.totalPieces) || 0
+    };
+  });
+  return { missions };
+}
+
 async function getPhotosWithCache() {
   const now = Date.now();
   if (photosCache.payload && photosCache.expiresAt > now) {
@@ -112,6 +131,35 @@ async function getPhotosWithCache() {
   })();
 
   return inflightPhotosFetch;
+}
+
+async function getMissionsWithCache() {
+  const now = Date.now();
+  if (missionsCache.payload && missionsCache.expiresAt > now) {
+    return missionsCache.payload;
+  }
+
+  if (inflightMissionsFetch) {
+    return inflightMissionsFetch;
+  }
+
+  inflightMissionsFetch = (async () => {
+    try {
+      const payload = await fetchFirestoreMissions();
+      missionsCache = {
+        payload,
+        expiresAt: Date.now() + MISSIONS_CACHE_TTL_MS
+      };
+      return payload;
+    } catch (error) {
+      if (missionsCache.payload) return missionsCache.payload;
+      throw error;
+    } finally {
+      inflightMissionsFetch = null;
+    }
+  })();
+
+  return inflightMissionsFetch;
 }
 
 function sendJson(res, statusCode, body) {
@@ -144,6 +192,16 @@ const server = http.createServer(async (req, res) => {
   if (req.url && req.url.startsWith('/api/photos')) {
     try {
       const payload = await getPhotosWithCache();
+      sendJson(res, 200, payload);
+    } catch (error) {
+      sendJson(res, 500, { error: `Firestore read failed: ${error.message}` });
+    }
+    return;
+  }
+
+  if (req.url && req.url.startsWith('/api/missions')) {
+    try {
+      const payload = await getMissionsWithCache();
       sendJson(res, 200, payload);
     } catch (error) {
       sendJson(res, 500, { error: `Firestore read failed: ${error.message}` });

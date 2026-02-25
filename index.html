@@ -53,16 +53,32 @@
     </div>
 
     <section class="panel">
+      <h2>Collected over time</h2>
+      <p id="timeSeriesSubtitle" class="muted hidden" hidden></p>
+      <div class="chart-wrap">
+        <svg id="timeSeriesChart" class="time-series" viewBox="0 0 900 280" preserveAspectRatio="xMinYMin meet" role="img"></svg>
+        <div id="timeSeriesTooltip" class="ts-tooltip hidden" hidden></div>
+      </div>
+      <p id="timeSeriesEmpty" class="muted hidden" hidden>No data for current filters.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Top missions (Top 20)</h2>
+      <p class="muted">Total pieces collected per mission</p>
+      <ol id="topMissionsList" class="rank-list"></ol>
+    </section>
+
+    <section class="panel">
       <h2>Most Collected (Top 50)</h2>
       <div class="panel-grid">
-        <div>
-          <h3>Brands</h3>
+        <details class="collapsible">
+          <summary><span>Brands</span><span class="collapsible-hint">click for details</span></summary>
           <ol id="topBrandsList" class="rank-list"></ol>
-        </div>
-        <div>
-          <h3>Labels</h3>
+        </details>
+        <details class="collapsible">
+          <summary><span>Labels</span><span class="collapsible-hint">click for details</span></summary>
           <ol id="topLabelsList" class="rank-list"></ol>
-        </div>
+        </details>
       </div>
     </section>
 
@@ -76,6 +92,8 @@
   <script src="js/stats.js"></script>
   <script src="js/filter-rules.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/time-series.js"></script>
+  <script src="js/missions.js"></script>
   <script src="js/render.js"></script>
   <script src="js/filters.js"></script>
   <script src="js/app.js"></script>

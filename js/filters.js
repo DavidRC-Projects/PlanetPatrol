@@ -107,7 +107,7 @@ function populateCountryOptions(photos, dictionary, selectedCountry = '') {
 }
 
 /** Applies active filters and renders all dashboard sections. */
-async function applyFilters(photos, locationDictionary) {
+async function applyFilters(photos, locationDictionary, missions) {
   const values = getFilterValues();
   if (!values) return;
   values.country = populateCountryOptions(photos, locationDictionary, values.country);
@@ -122,5 +122,5 @@ async function applyFilters(photos, locationDictionary) {
     values.day,
     values.brandLabelSearch
   );
-  await renderFilteredView(filtered);
+  await renderFilteredView(filtered, values, missions);
 }
