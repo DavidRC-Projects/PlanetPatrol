@@ -8,8 +8,14 @@ primary_region = 'iad'
 
 [build]
 
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+
 [http_service]
-  internal_port = 3000
+  # Fly injects PORT (usually 8080); server.js listens on process.env.PORT.
+  # Keep internal_port aligned so health checks and routing hit the right port.
+  internal_port = 8080
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true

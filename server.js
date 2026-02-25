@@ -4,6 +4,7 @@ const path = require('path');
 const admin = require('firebase-admin');
 
 const PORT = Number(process.env.PORT) || 8787;
+const HOST = process.env.HOST || '0.0.0.0';
 const ROOT_DIR = __dirname;
 const PHOTOS_CACHE_TTL_MS = Number(process.env.PHOTOS_CACHE_TTL_MS) || 5 * 60 * 1000;
 const MISSIONS_CACHE_TTL_MS = Number(process.env.MISSIONS_CACHE_TTL_MS) || 5 * 60 * 1000;
@@ -218,6 +219,6 @@ const server = http.createServer(async (req, res) => {
   sendFile(res, filePath);
 });
 
-server.listen(PORT, () => {
-  console.log(`PlanetPatrol server running at http://localhost:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`PlanetPatrol server running at http://${HOST}:${PORT}`);
 });
