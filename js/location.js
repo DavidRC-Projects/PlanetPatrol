@@ -331,8 +331,10 @@ function sleep(ms) {
 async function fetchLocationLabel(lat, lon) {
   // Prefer local precomputed resolution data first for speed and reliability.
   let best = await fetchCountryFromResolutionData(lat, lon);
-  if (!ENABLE_LIVE_REVERSE_GEOCODING) return best;
-  if (best.country !== UNKNOWN_COUNTRY_LABEL && best.constituency) return best;
+  if (!ENABLE_LIVE_REVERSE_GEOCODING) return { ...best, _usedLiveLookup: false };
+  // If we already know the country from local resolution data, return immediately.
+  // This keeps country dropdown population fast and avoids long startup delays.
+  if (best.country !== UNKNOWN_COUNTRY_LABEL) return { ...best, _usedLiveLookup: false };
 
   const direct = await fetchPhotonLocation(lat, lon);
   best = mergeLocationResult(best, direct);
@@ -344,7 +346,7 @@ async function fetchLocationLabel(lat, lon) {
 
   const nominatim = await fetchNominatimCountry(lat, lon);
   best = mergeLocationResult(best, nominatim);
-  return best;
+  return { ...best, _usedLiveLookup: true };
 }
 
 function mergeLocationResult(base, candidate) {
@@ -565,10 +567,11 @@ async function getOrBuildLocationDictionary(photos, options = {}) {
       const alreadyResolved = existing.country !== UNKNOWN_COUNTRY_LABEL;
       const hasLocalArea = !!normalizeConstituencyName(existing.constituency);
       if (alreadyResolved && (hasLocalArea || !ENABLE_LIVE_REVERSE_GEOCODING)) continue;
-      dictionary[c.key] = normalizeLocationEntry(await fetchLocationLabel(c.lat, c.lon));
+      const fetched = await fetchLocationLabel(c.lat, c.lon);
+      dictionary[c.key] = normalizeLocationEntry(fetched);
       countryCodeLookupCache.delete(dictionary);
       saveLocationDictionary(dictionary, storageKey);
-      if (requestDelayMs > 0) await sleep(requestDelayMs);
+      if (requestDelayMs > 0 && fetched._usedLiveLookup) await sleep(requestDelayMs);
     }
   } finally {
     locationEnrichmentJobs = Math.max(0, locationEnrichmentJobs - 1);
