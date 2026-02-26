@@ -173,6 +173,24 @@ function showTooltipAt({ left, top, contentHtml }) {
   tooltip.classList.remove('hidden');
 }
 
+function clientPointToSvg(svg, clientX, clientY) {
+  if (!svg || typeof svg.getScreenCTM !== 'function') return null;
+  const ctm = svg.getScreenCTM();
+  if (!ctm || typeof DOMPoint !== 'function') return null;
+  try {
+    return new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse());
+  } catch (_) {
+    return null;
+  }
+}
+
+function svgPointToClient(svg, x, y) {
+  if (!svg || typeof svg.getScreenCTM !== 'function') return null;
+  const ctm = svg.getScreenCTM();
+  if (!ctm || typeof DOMPoint !== 'function') return null;
+  return new DOMPoint(x, y).matrixTransform(ctm);
+}
+
 function ensureTimeSeriesInteractivity(svg) {
   if (!svg || svg.dataset.tsBound === '1') return;
   svg.dataset.tsBound = '1';
@@ -188,9 +206,8 @@ function ensureTimeSeriesInteractivity(svg) {
   svg.addEventListener('mousemove', (event) => {
     const state = svg._tsState;
     if (!state || !state.points || !state.points.length) return;
-    const rect = svg.getBoundingClientRect();
-    const relX = Math.min(Math.max(0, event.clientX - rect.left), rect.width);
-    const xInViewBox = (relX / rect.width) * state.W;
+    const svgPoint = clientPointToSvg(svg, event.clientX, event.clientY);
+    const xInViewBox = Math.min(Math.max(0, Number(svgPoint?.x) || 0), state.W);
 
     // Find nearest point by x.
     let nearest = state.points[0];
@@ -220,8 +237,9 @@ function ensureTimeSeriesInteractivity(svg) {
     const wrapper = svg.parentElement;
     if (!wrapper) return;
     const wrapperRect = wrapper.getBoundingClientRect();
-    const tooltipX = (nearest.x / state.W) * wrapperRect.width;
-    const tooltipY = (nearest.y / state.H) * wrapperRect.height;
+    const nearestClient = svgPointToClient(svg, nearest.x, nearest.y);
+    const tooltipX = Number(nearestClient?.x) - wrapperRect.left;
+    const tooltipY = Number(nearestClient?.y) - wrapperRect.top;
 
     const title = escapeHtml(nearest.tooltipLabel);
     const pieces = escapeHtml(formatNumber(nearest.pieces));
