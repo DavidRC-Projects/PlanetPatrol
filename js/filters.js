@@ -1,12 +1,14 @@
 /** Filter logic and UI state extraction. */
-function filterPhotos(photos, locationDictionary, country, status, minPieces, year, month, day, brandLabelSearch) {
+function filterPhotos(photos, locationDictionary, country, constituency, status, minPieces, year, month, day, brandLabelSearch) {
   photos = photos || {};
   const normalizedBrandLabelSearch = normalizeBrandLabelSearch(brandLabelSearch);
   const out = {};
   for (const id of Object.keys(photos)) {
     const photo = photos[id];
     const countryInfo = getCountryInfoForPhoto(photo, locationDictionary);
+    const constituencyInfo = getConstituencyInfoForPhoto(photo, locationDictionary);
     if (country && countryInfo.countryKey !== country) continue;
+    if (constituency && constituencyInfo.key !== constituency) continue;
     if (!passesStatusFilter(photo, status)) continue;
     if (!passesPiecesFilter(photo, minPieces)) continue;
     if (!passesDateFilter(photo, year, month, day)) continue;
@@ -35,6 +37,7 @@ function getFilterValues() {
     DOM_IDS.filterMonth,
     DOM_IDS.filterDay,
     DOM_IDS.filterCountry,
+    DOM_IDS.filterConstituency,
     DOM_IDS.filterBrandLabelSearch
   ];
   const els = getElements(ids);
@@ -46,6 +49,7 @@ function getFilterValues() {
     month: els[DOM_IDS.filterMonth].value,
     day: els[DOM_IDS.filterDay].value,
     country: els[DOM_IDS.filterCountry].value,
+    constituency: els[DOM_IDS.filterConstituency].value,
     brandLabelSearch: els[DOM_IDS.filterBrandLabelSearch].value
   };
 }
@@ -106,15 +110,43 @@ function populateCountryOptions(photos, dictionary, selectedCountry = '') {
   return el.value;
 }
 
+function populateConstituencyOptions(photos, dictionary, selectedCountry = '', selectedConstituency = '') {
+  const el = getElement(DOM_IDS.filterConstituency);
+  const labelEl = getElement(DOM_IDS.filterConstituencyLabel);
+  if (!el) return '';
+  if (!selectedCountry) {
+    if (labelEl) labelEl.textContent = 'County / location';
+    el.innerHTML = '<option value="">Select a country first</option>';
+    el.value = '';
+    return '';
+  }
+  if (labelEl) labelEl.textContent = 'County / location';
+  const constituencies = buildConstituencyCounts(photos, dictionary, selectedCountry);
+  el.innerHTML = '<option value="">All counties / locations</option>';
+  for (const item of constituencies) {
+    el.appendChild(new Option(`${item.constituency} (${item.count})`, item.key));
+  }
+  const stillValid = constituencies.some((item) => item.key === selectedConstituency);
+  el.value = stillValid ? selectedConstituency : '';
+  return el.value;
+}
+
 /** Applies active filters and renders all dashboard sections. */
 async function applyFilters(photos, locationDictionary, missions) {
   const values = getFilterValues();
   if (!values) return;
   values.country = populateCountryOptions(photos, locationDictionary, values.country);
+  values.constituency = populateConstituencyOptions(
+    photos,
+    locationDictionary,
+    values.country,
+    values.constituency
+  );
   const filtered = filterPhotos(
     photos,
     locationDictionary,
     values.country,
+    values.constituency,
     values.status,
     values.minPieces,
     values.year,

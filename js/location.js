@@ -1,7 +1,7 @@
 /** Location helpers. */
 
 const LOCATION_DICT_STORAGE_KEY = 'planetpatrol.locationDictionary.v1';
-const LOCATION_REQUEST_DELAY_MS = 0;
+const LOCATION_REQUEST_DELAY_MS = 80;
 const LOCATION_REQUEST_TIMEOUT_MS = 6000;
 const UNKNOWN_LOCATION_LABEL = 'Unknown location';
 const UNKNOWN_COUNTRY_LABEL = 'Unknown country';
@@ -10,13 +10,32 @@ const RESOLUTION_DATA_URL = '/exports/location-resolutions.json';
 const RESOLUTION_KEY_DECIMALS = 2;
 const DICTIONARY_KEY_DECIMALS = RESOLUTION_KEY_DECIMALS;
 const RESOLUTION_NEAREST_MAX_DISTANCE = 0.35;
-const ENABLE_LIVE_REVERSE_GEOCODING = false;
+const ENABLE_LIVE_REVERSE_GEOCODING = true;
 const COUNTRY_NAME_ALIASES = {
   usa: 'United States',
   'u.s.a.': 'United States',
   'united states of america': 'United States',
   uk: 'United Kingdom',
-  uae: 'United Arab Emirates'
+  uae: 'United Arab Emirates',
+  'ελλάς': 'Greece',
+  eire: 'Ireland',
+  'éire': 'Ireland',
+  belgie: 'Belgium',
+  'belgië': 'Belgium',
+  belgique: 'Belgium',
+  belgien: 'Belgium',
+  schweiz: 'Switzerland',
+  suisse: 'Switzerland',
+  svizzera: 'Switzerland',
+  svizra: 'Switzerland',
+  'مصر': 'Egypt',
+  sesel: 'Seychelles',
+  viti: 'Fiji',
+  'україна': 'Ukraine',
+  '中国': 'China',
+  'българия': 'Bulgaria',
+  'ދިވެހިރާއްޖެ': 'Maldives',
+  'ព្រះរាជាណាចក្រ​កម្ពុជា': 'Cambodia'
 };
 const COUNTRY_CODE_NAME_ALIASES = {
   bolivia: 'Bolivia',
@@ -54,7 +73,8 @@ const COUNTRY_NAME_TO_CODE_OVERRIDES = {
   'vatican city': 'VA'
 };
 const COUNTRY_CODE_ALIASES = {
-  UK: 'GB'
+  UK: 'GB',
+  FX: 'FR'
 };
 const COUNTRY_NAME_LOCALE_HINTS = [
   'en', 'es', 'fr', 'de', 'it', 'pt', 'nl', 'da', 'sv', 'no', 'fi',
@@ -67,6 +87,7 @@ let resolutionLookupPromise = null;
 const countryCodeLookupCache = new WeakMap();
 let countryNameToCodeLookupCache = null;
 let countryNameToEnglishLookupCache = null;
+let locationEnrichmentJobs = 0;
 const DICTIONARY_KEY_PATTERN = /^-?\d+\.\d{2},-?\d+\.\d{2}$/;
 
 /**
@@ -126,11 +147,36 @@ function parseCountryFromLabel(label) {
   return raw;
 }
 
+function normalizeConstituencyName(value) {
+  const raw = String(value || '').trim().replace(/\s+/g, ' ');
+  if (!raw) return '';
+  const lower = raw.toLowerCase();
+  if (lower === 'unknown' || lower === 'unknown constituency' || lower === 'n/a') return '';
+  return raw;
+}
+
+function parseConstituencyFromLabel(label, country = '') {
+  const raw = String(label || '').trim();
+  if (!raw || !raw.includes(',')) return '';
+  const first = normalizeConstituencyName(raw.split(',')[0]);
+  if (!first) return '';
+  const normalizedCountry = normalizeCountryName(country || parseCountryFromLabel(raw));
+  if (first.toLowerCase() === String(normalizedCountry || '').toLowerCase()) return '';
+  return first;
+}
+
 function normalizeCountryName(country) {
   const raw = String(country || '').trim().replace(/\s+/g, ' ');
   if (!raw) return UNKNOWN_COUNTRY_LABEL;
   const lower = raw.toLowerCase();
   if (lower === 'unknown location' || lower === 'unknown country') return UNKNOWN_COUNTRY_LABEL;
+  const candidates = [raw, ...raw.split(/[\/|]/g).map((part) => part.trim()).filter(Boolean)];
+  for (const candidate of candidates) {
+    const aliased = COUNTRY_NAME_ALIASES[candidate.toLowerCase()] || candidate;
+    const english = getEnglishCountryName(aliased);
+    if (english) return english;
+    if (COUNTRY_NAME_ALIASES[candidate.toLowerCase()]) return aliased;
+  }
   const aliased = COUNTRY_NAME_ALIASES[lower] || raw;
   return getEnglishCountryName(aliased) || aliased;
 }
@@ -140,7 +186,7 @@ function normalizeCountryLookupKey(value) {
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/&/g, ' and ')
-    .replace(/[^a-zA-Z0-9]+/g, ' ')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim()
     .toLowerCase();
 }
@@ -191,13 +237,23 @@ function getCountryNameToCodeLookup() {
   const lookup = new Map();
 
   if (typeof Intl !== 'undefined' && typeof Intl.DisplayNames === 'function') {
-    const displayNames = new Intl.DisplayNames(['en'], { type: 'region' });
+    const englishDisplayNames = new Intl.DisplayNames(['en'], { type: 'region' });
+    const codes = [];
     for (let i = 65; i <= 90; i += 1) {
       for (let j = 65; j <= 90; j += 1) {
         const code = String.fromCharCode(i, j);
-        const name = displayNames.of(code);
+        const name = englishDisplayNames.of(code);
         if (!name || name === code) continue;
+        codes.push(code);
         lookup.set(normalizeCountryLookupKey(name), code);
+      }
+    }
+    for (const locale of COUNTRY_NAME_LOCALE_HINTS) {
+      const localizedDisplayNames = new Intl.DisplayNames([locale], { type: 'region' });
+      for (const code of codes) {
+        const localizedName = localizedDisplayNames.of(code);
+        if (!localizedName || localizedName === code) continue;
+        lookup.set(normalizeCountryLookupKey(localizedName), code);
       }
     }
   }
@@ -231,26 +287,30 @@ function normalizeCountryCode(countryCode) {
 }
 
 function getCountryGroupKey(country, countryCode) {
-  const code = normalizeCountryCode(countryCode);
+  const normalizedCountry = normalizeCountryName(country);
+  const code = normalizeCountryCode(countryCode) || getCountryCodeFromName(normalizedCountry);
   if (/^[A-Z]{2}$/.test(code)) return `cc:${code}`;
-  return `nm:${normalizeCountryName(country).toLowerCase()}`;
+  return `nm:${normalizedCountry.toLowerCase()}`;
 }
 
 function normalizeLocationEntry(entry) {
-  if (!entry) return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '' };
+  if (!entry) return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '', constituency: '' };
   if (typeof entry === 'string') {
     const country = normalizeCountryName(parseCountryFromLabel(entry));
     const countryCode = getCountryCodeFromName(country);
+    const constituency = parseConstituencyFromLabel(entry, country);
     return {
       label: entry,
       country,
-      countryCode
+      countryCode,
+      constituency
     };
   }
   const label = String(entry.label || '').trim() || UNKNOWN_LOCATION_LABEL;
   const country = normalizeCountryName(entry.country || parseCountryFromLabel(label));
   const countryCode = normalizeCountryCode(entry.countryCode) || getCountryCodeFromName(country);
-  return { label, country, countryCode };
+  const constituency = normalizeConstituencyName(entry.constituency) || parseConstituencyFromLabel(label, country);
+  return { label, country, countryCode, constituency };
 }
 
 function countryCodeToFlag(countryCode) {
@@ -267,23 +327,36 @@ function sleep(ms) {
 /** Looks up one coordinate on the internet and returns a label. */
 async function fetchLocationLabel(lat, lon) {
   // Prefer local precomputed resolution data first for speed and reliability.
-  const fromResolutionData = await fetchCountryFromResolutionData(lat, lon);
-  if (fromResolutionData.country !== UNKNOWN_COUNTRY_LABEL) return fromResolutionData;
-
-  if (!ENABLE_LIVE_REVERSE_GEOCODING) {
-    return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '' };
-  }
+  let best = await fetchCountryFromResolutionData(lat, lon);
+  if (!ENABLE_LIVE_REVERSE_GEOCODING) return best;
+  if (best.country !== UNKNOWN_COUNTRY_LABEL && best.constituency) return best;
 
   const direct = await fetchPhotonLocation(lat, lon);
-  if (direct.country !== UNKNOWN_COUNTRY_LABEL) return direct;
+  best = mergeLocationResult(best, direct);
+  if (best.country !== UNKNOWN_COUNTRY_LABEL && best.constituency) return best;
 
   const nearby = await findNearbyCountry(lat, lon);
-  if (nearby.country !== UNKNOWN_COUNTRY_LABEL) return nearby;
+  best = mergeLocationResult(best, nearby);
+  if (best.country !== UNKNOWN_COUNTRY_LABEL && best.constituency) return best;
 
   const nominatim = await fetchNominatimCountry(lat, lon);
-  if (nominatim.country !== UNKNOWN_COUNTRY_LABEL) return nominatim;
+  best = mergeLocationResult(best, nominatim);
+  return best;
+}
 
-  return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '' };
+function mergeLocationResult(base, candidate) {
+  base = normalizeLocationEntry(base);
+  candidate = normalizeLocationEntry(candidate);
+  if (base.country === UNKNOWN_COUNTRY_LABEL) return candidate;
+  if (candidate.country === UNKNOWN_COUNTRY_LABEL) return base;
+  if (base.country !== candidate.country) return base;
+  const constituency = normalizeConstituencyName(candidate.constituency) || normalizeConstituencyName(base.constituency);
+  return {
+    label: constituency ? `${constituency}, ${base.country}` : (base.label || base.country),
+    country: base.country,
+    countryCode: candidate.countryCode || base.countryCode || '',
+    constituency
+  };
 }
 
 function toResolutionKey(lat, lon) {
@@ -310,7 +383,12 @@ async function getResolutionLookup() {
           const lon = Number(row?.lon);
           if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
           const key = String(row?.key || '').trim() || toResolutionKey(lat, lon);
-          const value = { lat, lon, country };
+          const value = {
+            lat,
+            lon,
+            country,
+            constituency: normalizeConstituencyName(row?.detail)
+          };
           byKey.set(key, value);
           points.push(value);
         }
@@ -325,10 +403,12 @@ async function fetchCountryFromResolutionData(lat, lon) {
   const lookup = await getResolutionLookup();
   const exact = lookup.byKey.get(toResolutionKey(lat, lon));
   if (exact) {
+    const constituency = normalizeConstituencyName(exact.constituency);
     return {
-      label: exact.country,
+      label: constituency ? `${constituency}, ${exact.country}` : exact.country,
       country: exact.country,
-      countryCode: ''
+      countryCode: '',
+      constituency
     };
   }
 
@@ -344,14 +424,16 @@ async function fetchCountryFromResolutionData(lat, lon) {
   }
 
   if (nearest && nearestDistanceSq <= maxDistanceSq) {
+    const constituency = normalizeConstituencyName(nearest.constituency);
     return {
-      label: nearest.country,
+      label: constituency ? `${constituency}, ${nearest.country}` : nearest.country,
       country: nearest.country,
-      countryCode: ''
+      countryCode: '',
+      constituency
     };
   }
 
-  return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '' };
+  return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '', constituency: '' };
 }
 
 async function fetchJsonWithTimeout(url) {
@@ -371,14 +453,18 @@ async function fetchJsonWithTimeout(url) {
 async function fetchPhotonLocation(lat, lon) {
   const query = `lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
   const payload = await fetchJsonWithTimeout(`https://photon.komoot.io/reverse?${query}`);
-  if (!payload) return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '' };
+  if (!payload) return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '', constituency: '' };
   const props = payload?.features?.[0]?.properties || {};
   const label = formatLocationLabel(payload);
   const country = normalizeCountryName(props.country || parseCountryFromLabel(label));
+  const constituency = normalizeConstituencyName(
+    props.district || props.county || props.city || parseConstituencyFromLabel(label, country)
+  );
   return {
     label,
     country,
-    countryCode: String(props.countrycode || '').trim().toUpperCase()
+    countryCode: String(props.countrycode || '').trim().toUpperCase(),
+    constituency
   };
 }
 
@@ -387,13 +473,20 @@ async function fetchNominatimCountry(lat, lon) {
   const payload = await fetchJsonWithTimeout(`https://nominatim.openstreetmap.org/reverse?${query}`);
   const country = normalizeCountryName(payload?.address?.country);
   if (country === UNKNOWN_COUNTRY_LABEL) {
-    return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '' };
+    return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '', constituency: '' };
   }
   const countryCode = String(payload?.address?.country_code || '').trim().toUpperCase();
+  const constituency = normalizeConstituencyName(
+    payload?.address?.state_district ||
+    payload?.address?.county ||
+    payload?.address?.city_district ||
+    payload?.address?.city
+  );
   return {
-    label: country,
+    label: constituency ? `${constituency}, ${country}` : country,
     country,
-    countryCode
+    countryCode,
+    constituency
   };
 }
 
@@ -412,7 +505,7 @@ async function findNearbyCountry(lat, lon) {
     const nominatim = await fetchNominatimCountry(nearLat, nearLon);
     if (nominatim.country !== UNKNOWN_COUNTRY_LABEL) return nominatim;
   }
-  return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '' };
+  return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '', constituency: '' };
 }
 
 function isUnknownLocationEntry(entry) {
@@ -462,15 +555,27 @@ async function getOrBuildLocationDictionary(photos, options = {}) {
   const dictionary = loadLocationDictionary(storageKey);
   const coords = getUniqueCoordinates(photos);
 
-  for (const c of coords) {
-    if (dictionary[c.key] && !isUnknownLocationEntry(dictionary[c.key])) continue;
-    dictionary[c.key] = normalizeLocationEntry(await fetchLocationLabel(c.lat, c.lon));
-    countryCodeLookupCache.delete(dictionary);
-    saveLocationDictionary(dictionary, storageKey);
-    if (requestDelayMs > 0) await sleep(requestDelayMs);
+  locationEnrichmentJobs += 1;
+  try {
+    for (const c of coords) {
+      const existing = normalizeLocationEntry(dictionary[c.key]);
+      const alreadyResolved = existing.country !== UNKNOWN_COUNTRY_LABEL;
+      const hasLocalArea = !!normalizeConstituencyName(existing.constituency);
+      if (alreadyResolved && (hasLocalArea || !ENABLE_LIVE_REVERSE_GEOCODING)) continue;
+      dictionary[c.key] = normalizeLocationEntry(await fetchLocationLabel(c.lat, c.lon));
+      countryCodeLookupCache.delete(dictionary);
+      saveLocationDictionary(dictionary, storageKey);
+      if (requestDelayMs > 0) await sleep(requestDelayMs);
+    }
+  } finally {
+    locationEnrichmentJobs = Math.max(0, locationEnrichmentJobs - 1);
   }
 
   return dictionary;
+}
+
+function isLocationEnrichmentRunning() {
+  return locationEnrichmentJobs > 0;
 }
 
 function getCountryInfoForPhoto(photo, dictionary) {
@@ -480,7 +585,8 @@ function getCountryInfoForPhoto(photo, dictionary) {
       country: UNKNOWN_COUNTRY_LABEL,
       countryCode: '',
       countryKey: getCountryGroupKey(UNKNOWN_COUNTRY_LABEL, ''),
-      label: UNKNOWN_LOCATION_LABEL
+      label: UNKNOWN_LOCATION_LABEL,
+      constituency: ''
     };
   }
   const key = coordinateKey(coords.lat, coords.lon);
@@ -491,7 +597,20 @@ function getCountryInfoForPhoto(photo, dictionary) {
     country,
     countryCode,
     countryKey: getCountryGroupKey(country, countryCode),
-    label: entry.label || 'Unknown location'
+    label: entry.label || 'Unknown location',
+    constituency: normalizeConstituencyName(entry.constituency)
+  };
+}
+
+function getConstituencyInfoForPhoto(photo, dictionary) {
+  const countryInfo = getCountryInfoForPhoto(photo, dictionary);
+  let constituency = normalizeConstituencyName(countryInfo.constituency);
+  if (!constituency) constituency = parseConstituencyFromLabel(countryInfo.label, countryInfo.country);
+  if (!constituency) return { key: '', constituency: '', countryKey: countryInfo.countryKey };
+  return {
+    key: `${countryInfo.countryKey}::${constituency.toLowerCase()}`,
+    constituency,
+    countryKey: countryInfo.countryKey
   };
 }
 
@@ -515,6 +634,40 @@ function buildCountryCounts(photos, dictionary) {
   }
   return [...groups.values()]
     .sort((a, b) => b.count - a.count || a.country.localeCompare(b.country));
+}
+
+function buildConstituencyCounts(photos, dictionary, selectedCountry = '') {
+  photos = photos || {};
+  const groups = new Map();
+  for (const id of Object.keys(photos)) {
+    const photo = photos[id];
+    const countryInfo = getCountryInfoForPhoto(photo, dictionary);
+    if (selectedCountry && countryInfo.countryKey !== selectedCountry) continue;
+    const constituencyInfo = getConstituencyInfoForPhoto(photo, dictionary);
+    if (!constituencyInfo.key) continue;
+    const current = groups.get(constituencyInfo.key) || {
+      key: constituencyInfo.key,
+      constituency: constituencyInfo.constituency,
+      count: 0
+    };
+    current.count += 1;
+    groups.set(constituencyInfo.key, current);
+  }
+  return [...groups.values()]
+    .sort((a, b) => b.count - a.count || a.constituency.localeCompare(b.constituency));
+}
+
+function hasMissingConstituencyForCountry(photos, dictionary, selectedCountry = '') {
+  if (!selectedCountry) return false;
+  photos = photos || {};
+  for (const id of Object.keys(photos)) {
+    const photo = photos[id];
+    const countryInfo = getCountryInfoForPhoto(photo, dictionary);
+    if (countryInfo.countryKey !== selectedCountry) continue;
+    const constituencyInfo = getConstituencyInfoForPhoto(photo, dictionary);
+    if (!constituencyInfo.key) return true;
+  }
+  return false;
 }
 
 function getCountryCodeFromDictionary(dictionary, countryName) {

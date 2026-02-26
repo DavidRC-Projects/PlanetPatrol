@@ -32,16 +32,20 @@
         <div class="card"><span class="value" id="unmoderated">0</span><div class="label">Unmoderated photos</div></div>
         <div class="card"><span class="value" id="totalPhotos">0</span><div class="label">Total photos</div></div>
         <section class="card country-box">
-          <div class="country-current">
-            <span id="countryFlag" class="country-flag" aria-hidden="true">🌍</span>
-            <span id="countryName">All countries</span>
+          <div class="country-filters">
+            <label class="filter-field">
+              <span class="filter-label">Country</span>
+              <select id="filterCountry">
+                <option value="">All countries</option>
+              </select>
+            </label>
+            <label class="filter-field">
+              <span id="filterConstituencyLabel" class="filter-label">County / location</span>
+              <select id="filterConstituency">
+                <option value="">Select a country first</option>
+              </select>
+            </label>
           </div>
-          <label class="filter-field">
-            <span class="filter-label">Country</span>
-            <select id="filterCountry">
-              <option value="">All countries</option>
-            </select>
-          </label>
         </section>
       </div>
 

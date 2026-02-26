@@ -20,6 +20,8 @@ const DOM_IDS = {
   filterMonth: 'filterMonth',
   filterDay: 'filterDay',
   filterCountry: 'filterCountry',
+  filterConstituency: 'filterConstituency',
+  filterConstituencyLabel: 'filterConstituencyLabel',
   filterBrandLabelSearch: 'filterBrandLabelSearch',
   countryFlag: 'countryFlag',
   countryName: 'countryName',

@@ -51,7 +51,7 @@ body {
 }
 
 .country-box {
-  min-width: 240px;
+  min-width: 280px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -63,6 +63,13 @@ body {
   gap: 0.5rem;
   font-weight: 600;
   margin-bottom: 0.45rem;
+}
+
+.country-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.55rem;
+  align-items: end;
 }
 
 .country-flag {
@@ -79,6 +86,16 @@ body {
   padding: 0.3rem 0.45rem;
   border-radius: 4px;
   border: 1px solid #ccc;
+}
+
+.country-filters .filter-field {
+  gap: 0.34rem;
+  min-width: 0;
+}
+
+.country-filters select {
+  margin-left: 0;
+  width: 100%;
 }
 
 .cards {
@@ -701,7 +718,7 @@ body {
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.8rem;
   margin-bottom: 1rem;
 }
@@ -871,6 +888,10 @@ body {
   }
 
   .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .country-filters {
     grid-template-columns: 1fr;
   }
 }

@@ -41,6 +41,7 @@ function bindFilterAutoRefresh() {
     DOM_IDS.filterMonth,
     DOM_IDS.filterDay,
     DOM_IDS.filterCountry,
+    DOM_IDS.filterConstituency,
     DOM_IDS.filterBrandLabelSearch
   ];
   const els = getElements(ids);
