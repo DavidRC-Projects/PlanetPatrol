@@ -28,6 +28,7 @@ const DOM_IDS = {
   timeSeriesEmpty: 'timeSeriesEmpty',
   timeSeriesTooltip: 'timeSeriesTooltip',
   topMissionsList: 'topMissionsList',
+  topMissionsSummary: 'topMissionsSummary',
   topBrandsList: 'topBrandsList',
   topLabelsList: 'topLabelsList'
 };

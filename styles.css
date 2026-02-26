@@ -253,6 +253,229 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.ts-panel {
+  padding: 0;
+}
+
+.ts-card .chart-wrap {
+  transition: filter 140ms ease;
+}
+
+.ts-card .time-series {
+  height: 160px;
+  transition: height 180ms ease;
+}
+
+.ts-card[open] .time-series {
+  height: 260px;
+}
+
+.ts-card:not([open]) .ts-tooltip {
+  display: none;
+}
+
+.leaderboard-panel {
+  padding: 0;
+}
+
+.leaderboard-card {
+  border-radius: 12px;
+  border: 1px solid #eef2f1;
+  background: #ffffff;
+  padding: 0.25rem;
+}
+
+.leaderboard-card summary {
+  list-style: none;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 10px;
+  user-select: none;
+  transition: background 140ms ease, transform 140ms ease;
+}
+
+.leaderboard-card summary:hover {
+  background: rgba(14, 165, 233, 0.06);
+}
+
+.leaderboard-card[open] summary {
+  background: rgba(15, 118, 110, 0.04);
+}
+
+.leaderboard-card[open] summary:hover {
+  background: rgba(15, 118, 110, 0.06);
+}
+
+.leaderboard-card summary::-webkit-details-marker { display: none; }
+
+.leaderboard-card summary:focus-visible {
+  outline: 2px solid rgba(14, 165, 233, 0.55);
+  outline-offset: 2px;
+}
+
+.leaderboard-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.leaderboard-title {
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.leaderboard-hint {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #5a6b66;
+}
+
+.leaderboard-podium {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.podium-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: rgba(15, 118, 110, 0.06);
+  max-width: 100%;
+}
+
+.podium-chip--1 {
+  border-color: rgba(245, 158, 11, 0.34);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.podium-chip--2 {
+  border-color: rgba(100, 116, 139, 0.35);
+  background: rgba(100, 116, 139, 0.10);
+}
+
+.podium-chip--3 {
+  border-color: rgba(234, 88, 12, 0.30);
+  background: rgba(234, 88, 12, 0.10);
+}
+
+.podium-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.podium-name {
+  font-weight: 750;
+  color: #1f2a27;
+  max-width: 26ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.podium-count {
+  font-weight: 800;
+  color: #0a6d3d;
+}
+
+.leaderboard-body {
+  padding: 0.2rem 0.85rem 0.85rem;
+}
+
+.leaderboard-table-wrap {
+  max-height: 340px;
+  overflow: auto;
+  border-radius: 10px;
+  border: 1px solid #eef2f1;
+  background: #fbfdfc;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.leaderboard-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f6fbf9;
+  border-bottom: 1px solid #e7efed;
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #52615c;
+}
+
+.leaderboard-col-rank {
+  width: 92px;
+}
+
+.leaderboard-col-num {
+  width: 130px;
+  text-align: right;
+}
+
+.leaderboard-table tbody td {
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid rgba(231, 239, 237, 0.9);
+  vertical-align: middle;
+}
+
+.leaderboard-table tbody tr:hover td {
+  background: rgba(14, 165, 233, 0.06);
+}
+
+.leaderboard-table tbody tr:nth-child(even) td {
+  background: rgba(15, 118, 110, 0.015);
+}
+
+.leaderboard-rank {
+  white-space: nowrap;
+  color: #25423a;
+  font-weight: 750;
+}
+
+.leaderboard-rank-num {
+  display: inline-block;
+  min-width: 1.5ch;
+}
+
+.rank-badge {
+  margin-right: 0.35rem;
+}
+
+.leaderboard-mission {
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 0;
+}
+
+.leaderboard-num {
+  text-align: right;
+  font-weight: 850;
+  color: #0a6d3d;
+}
+
+.leaderboard-empty {
+  padding: 1rem;
+  color: #666;
+  font-style: italic;
+}
+
 .collapsible {
   border-radius: 10px;
   border: 1px solid #eef2f1;

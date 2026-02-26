@@ -53,6 +53,15 @@ function bindFilterAutoRefresh() {
   }
 }
 
+function bindTimeSeriesExpand() {
+  const details = document.getElementById('timeSeriesPanel');
+  if (!details) return;
+  details.addEventListener('toggle', () => {
+    // Avoid tooltip getting "stuck" when collapsing the chart.
+    try { hideTooltip(); } catch (_) { /* no-op */ }
+  });
+}
+
 function warmLocationDictionary(photos) {
   try {
     appState.locationDictionary = loadLocationDictionary();
@@ -86,6 +95,7 @@ async function init() {
     showDashboard();
     populateYearOptions(appState.photos);
     bindFilterAutoRefresh();
+    bindTimeSeriesExpand();
     void applyFilters(appState.photos, appState.locationDictionary, appState.missions);
   } catch (error) {
     showError(error.message || 'We could not load data from the API. Please try again shortly.');

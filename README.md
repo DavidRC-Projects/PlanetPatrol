@@ -43,3 +43,21 @@ npm start
 ```
 
 Then open `http://localhost:8787`.
+
+## Run with Docker (local)
+
+Build:
+
+```bash
+docker build -t planetpatrol:local .
+```
+
+Run (provide Firestore credentials via env var):
+
+```bash
+docker run --rm -p 8787:8787 \
+  -e FIREBASE_SERVICE_ACCOUNT_JSON="$(cat plastic-patrol-fd3b3-firebase-adminsdk-wzxjy-d21b2320fa.json)" \
+  planetpatrol:local
+```
+
+Then open `http://localhost:8787`.

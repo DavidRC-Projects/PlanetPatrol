@@ -52,20 +52,44 @@
       <label>Brand/Label: <input id="filterBrandLabelSearch" type="text" placeholder="Type exact brand or label" autocomplete="off"></label>
     </div>
 
-    <section class="panel">
-      <h2>Collected over time</h2>
-      <p id="timeSeriesSubtitle" class="muted hidden" hidden></p>
-      <div class="chart-wrap">
-        <svg id="timeSeriesChart" class="time-series" viewBox="0 0 900 280" preserveAspectRatio="xMinYMin meet" role="img"></svg>
-        <div id="timeSeriesTooltip" class="ts-tooltip hidden" hidden></div>
-      </div>
-      <p id="timeSeriesEmpty" class="muted hidden" hidden>No data for current filters.</p>
+    <section class="panel ts-panel">
+      <details class="collapsible ts-card" id="timeSeriesPanel">
+        <summary><span>Collected over time</span><span class="collapsible-hint">click to expand chart</span></summary>
+        <p id="timeSeriesSubtitle" class="muted hidden" hidden></p>
+        <div class="chart-wrap">
+          <svg id="timeSeriesChart" class="time-series" viewBox="0 0 900 280" preserveAspectRatio="xMinYMin meet" role="img"></svg>
+          <div id="timeSeriesTooltip" class="ts-tooltip hidden" hidden></div>
+        </div>
+        <p id="timeSeriesEmpty" class="muted hidden" hidden>No data for current filters.</p>
+      </details>
     </section>
 
-    <section class="panel">
-      <h2>Top missions (Top 20)</h2>
-      <p class="muted">Total pieces collected per mission</p>
-      <ol id="topMissionsList" class="rank-list"></ol>
+    <section class="panel leaderboard-panel">
+      <details class="collapsible leaderboard-card" id="missionsLeaderboard">
+        <summary>
+          <span class="leaderboard-head">
+            <span class="leaderboard-title">Top missions</span>
+            <span class="leaderboard-hint">litter pieces • click to expand Top 20</span>
+          </span>
+          <span id="topMissionsSummary" class="leaderboard-podium" aria-label="Top 3 missions preview"></span>
+        </summary>
+
+        <div class="leaderboard-body">
+          <p class="muted">Total pieces collected per mission</p>
+          <div class="leaderboard-table-wrap" role="region" aria-label="Top missions table" tabindex="0">
+            <table class="leaderboard-table">
+              <thead>
+                <tr>
+                  <th scope="col" class="leaderboard-col-rank">Rank</th>
+                  <th scope="col">Mission</th>
+                  <th scope="col" class="leaderboard-col-num">Pieces</th>
+                </tr>
+              </thead>
+              <tbody id="topMissionsList"></tbody>
+            </table>
+          </div>
+        </div>
+      </details>
     </section>
 
     <section class="panel">
