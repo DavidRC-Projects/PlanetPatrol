@@ -7,10 +7,11 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="brand-header">
-    <div class="brand-chip">Planet Patrol</div>
-    <h1 class="brand-title">PlanetPatrol Dashboard</h1>
-  </header>
+  <main class="page-shell">
+    <header class="brand-header">
+      <div class="brand-chip">Planet Patrol</div>
+      <h1 class="brand-title">PlanetPatrol Dashboard</h1>
+    </header>
 
   <div id="loading" class="loading" role="status" aria-live="polite">
     <div class="loading-card">
@@ -18,94 +19,112 @@
       <p class="loading-text">Loading dashboard data...</p>
     </div>
   </div>
-  <section id="error" class="status-page hidden" hidden>
-    <h2>Unable to load dashboard data</h2>
-    <p id="errorMessage">We could not pull data from the database. Please try again in a moment.</p>
-  </section>
-
-  <div id="dashboard" class="hidden" hidden>
-    <div class="cards">
-      <div class="card"><span class="value" id="totalPieces">0</span><div class="label">Total litter collected</div></div>
-      <div class="card"><span class="value" id="unmoderatedPieces">0</span><div class="label">Unmoderated litter collected</div></div>
-      <div class="card"><span class="value" id="moderated">0</span><div class="label">Moderated photos</div></div>
-      <div class="card"><span class="value" id="unmoderated">0</span><div class="label">Unmoderated photos</div></div>
-      <div class="card"><span class="value" id="totalPhotos">0</span><div class="label">Total photos</div></div>
-      <section class="card country-box">
-        <div class="country-current">
-          <span id="countryFlag" class="country-flag" aria-hidden="true">🌍</span>
-          <span id="countryName">All countries</span>
-        </div>
-        <label>Country:
-          <select id="filterCountry">
-            <option value="">All countries</option>
-          </select>
-        </label>
-      </section>
-    </div>
-
-    <div class="filters">
-      <label>Status: <select id="filterStatus"><option value="all">All</option><option value="moderated">Moderated</option><option value="unmoderated">Unmoderated</option></select></label>
-      <label>Min pieces: <input type="number" id="filterMinPieces" min="0" value="0"></label>
-      <label>Year: <select id="filterYear"><option value="">All</option></select></label>
-      <label>Month (within selected year): <select id="filterMonth"><option value="">All</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select></label>
-      <label>Day of month: <select id="filterDay"><option value="">All</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></label>
-      <label>Brand/Label: <input id="filterBrandLabelSearch" type="text" placeholder="Type exact brand or label" autocomplete="off"></label>
-    </div>
-
-    <section class="panel ts-panel">
-      <details class="collapsible ts-card" id="timeSeriesPanel">
-        <summary><span>Collected over time</span><span class="collapsible-hint">click to expand chart</span></summary>
-        <p id="timeSeriesSubtitle" class="muted hidden" hidden></p>
-        <div class="chart-wrap">
-          <svg id="timeSeriesChart" class="time-series" viewBox="0 0 900 280" preserveAspectRatio="xMinYMin meet" role="img"></svg>
-          <div id="timeSeriesTooltip" class="ts-tooltip hidden" hidden></div>
-        </div>
-        <p id="timeSeriesEmpty" class="muted hidden" hidden>No data for current filters.</p>
-      </details>
+    <section id="error" class="status-page hidden" hidden>
+      <h2>Unable to load dashboard data</h2>
+      <p id="errorMessage">We could not pull data from the database. Please try again in a moment.</p>
     </section>
 
-    <section class="panel leaderboard-panel">
-      <details class="collapsible leaderboard-card" id="missionsLeaderboard">
-        <summary>
-          <span class="leaderboard-head">
-            <span class="leaderboard-title">Top missions</span>
-            <span class="leaderboard-hint">litter pieces • click to expand Top 20</span>
-          </span>
-          <span id="topMissionsSummary" class="leaderboard-podium" aria-label="Top 3 missions preview"></span>
-        </summary>
-
-        <div class="leaderboard-body">
-          <p class="muted">Total pieces collected per mission</p>
-          <div class="leaderboard-table-wrap" role="region" aria-label="Top missions table" tabindex="0">
-            <table class="leaderboard-table">
-              <thead>
-                <tr>
-                  <th scope="col" class="leaderboard-col-rank">Rank</th>
-                  <th scope="col">Mission</th>
-                  <th scope="col" class="leaderboard-col-num">Pieces</th>
-                </tr>
-              </thead>
-              <tbody id="topMissionsList"></tbody>
-            </table>
+    <div id="dashboard" class="hidden" hidden>
+      <div class="cards" id="overview">
+        <div class="card"><span class="value" id="totalPieces">0</span><div class="label">Total litter collected</div></div>
+        <div class="card"><span class="value" id="unmoderatedPieces">0</span><div class="label">Unmoderated litter collected</div></div>
+        <div class="card"><span class="value" id="moderated">0</span><div class="label">Moderated photos</div></div>
+        <div class="card"><span class="value" id="unmoderated">0</span><div class="label">Unmoderated photos</div></div>
+        <div class="card"><span class="value" id="totalPhotos">0</span><div class="label">Total photos</div></div>
+        <section class="card country-box">
+          <div class="country-current">
+            <span id="countryFlag" class="country-flag" aria-hidden="true">🌍</span>
+            <span id="countryName">All countries</span>
           </div>
-        </div>
-      </details>
-    </section>
-
-    <section class="panel">
-      <h2>Most Collected (Top 50)</h2>
-      <div class="panel-grid">
-        <details class="collapsible">
-          <summary><span>Brands</span><span class="collapsible-hint">click for details</span></summary>
-          <ol id="topBrandsList" class="rank-list"></ol>
-        </details>
-        <details class="collapsible">
-          <summary><span>Labels</span><span class="collapsible-hint">click for details</span></summary>
-          <ol id="topLabelsList" class="rank-list"></ol>
-        </details>
+          <label class="filter-field">
+            <span class="filter-label">Country</span>
+            <select id="filterCountry">
+              <option value="">All countries</option>
+            </select>
+          </label>
+        </section>
       </div>
-    </section>
 
+      <section class="filters" id="filters">
+        <label class="filter-field"><span class="filter-label">Status</span><select id="filterStatus"><option value="all">All</option><option value="moderated">Moderated</option><option value="unmoderated">Unmoderated</option></select></label>
+        <label class="filter-field"><span class="filter-label">Min litter pieces</span><input type="number" id="filterMinPieces" min="0" value="0"></label>
+        <label class="filter-field"><span class="filter-label">Year</span><select id="filterYear"><option value="">All</option></select></label>
+        <label class="filter-field"><span class="filter-label">Month (selected year)</span><select id="filterMonth"><option value="">All</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select></label>
+        <label class="filter-field"><span class="filter-label">Day of month</span><select id="filterDay"><option value="">All</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></label>
+        <label class="filter-field filter-field--wide"><span class="filter-label">Brand / label</span><input id="filterBrandLabelSearch" type="text" placeholder="Type exact brand or label" autocomplete="off"></label>
+      </section>
+
+      <div class="insights-grid" id="insights">
+        <section class="panel ts-panel">
+          <section class="ts-card insight-card ts-card-static" id="timeSeriesPanel">
+            <div class="ts-card-header">
+              <h2 class="insight-heading">Litter trend over time</h2>
+            </div>
+            <p id="timeSeriesSubtitle" class="muted hidden" hidden></p>
+            <div class="chart-wrap">
+              <svg id="timeSeriesChart" class="time-series time-series--interactive" viewBox="0 0 900 280" preserveAspectRatio="xMinYMin meet" role="button" tabindex="0" aria-label="Open larger litter trend chart"></svg>
+              <div id="timeSeriesTooltip" class="ts-tooltip hidden" hidden></div>
+            </div>
+            <p id="timeSeriesEmpty" class="muted hidden" hidden>No data for current filters.</p>
+          </section>
+        </section>
+
+        <section class="panel leaderboard-panel">
+          <details class="collapsible leaderboard-card insight-card" id="missionsLeaderboard">
+            <summary>
+              <span class="leaderboard-head">
+                <span class="leaderboard-title">Mission leaderboard</span>
+                <span class="leaderboard-hint">litter pieces collected</span>
+              </span>
+              <span id="topMissionsSummary" class="leaderboard-podium" aria-label="Top 3 missions preview"></span>
+            </summary>
+
+            <div class="leaderboard-body">
+              <p class="muted">Total pieces collected per mission</p>
+              <div class="leaderboard-table-wrap" role="region" aria-label="Top missions table" tabindex="0">
+                <table class="leaderboard-table">
+                  <thead>
+                    <tr>
+                      <th scope="col" class="leaderboard-col-rank">Rank</th>
+                      <th scope="col">Mission</th>
+                      <th scope="col" class="leaderboard-col-num">Pieces</th>
+                    </tr>
+                  </thead>
+                  <tbody id="topMissionsList"></tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+        </section>
+      </div>
+
+      <section class="panel panel-collection" id="collections">
+        <h2>Most Collected Brands & Labels (Top 50)</h2>
+        <div class="panel-grid">
+          <details class="collapsible">
+            <summary><span>Brands</span><span class="collapsible-hint">click for details</span></summary>
+            <ol id="topBrandsList" class="rank-list"></ol>
+          </details>
+          <details class="collapsible">
+            <summary><span>Labels</span><span class="collapsible-hint">click for details</span></summary>
+            <ol id="topLabelsList" class="rank-list"></ol>
+          </details>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <div id="timeSeriesModal" class="ts-modal hidden" hidden aria-hidden="true">
+    <div class="ts-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="timeSeriesModalTitle">
+      <button id="timeSeriesModalClose" class="ts-modal-close" type="button" aria-label="Close large chart">×</button>
+      <h2 id="timeSeriesModalTitle">Litter trend over time</h2>
+      <div class="chart-wrap chart-wrap--modal">
+        <svg id="timeSeriesChartModal" class="time-series time-series--modal" viewBox="0 0 900 280" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Large litter trend chart"></svg>
+        <div id="timeSeriesTooltipModal" class="ts-tooltip hidden" hidden></div>
+      </div>
+      <p id="timeSeriesEmptyModal" class="muted hidden" hidden>No data for current filters.</p>
+    </div>
   </div>
 
   <script src="js/config.js"></script>

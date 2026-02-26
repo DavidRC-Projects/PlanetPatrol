@@ -140,9 +140,7 @@ function buildTimeSeriesPoints(filtered, filters) {
   return { granularity, points };
 }
 
-function setChartEmptyState(isEmpty) {
-  const chart = getElement(DOM_IDS.timeSeriesChart);
-  const emptyEl = getElement(DOM_IDS.timeSeriesEmpty);
+function setChartEmptyState({ isEmpty, chart, emptyEl }) {
   if (chart) {
     chart.classList.toggle('hidden', isEmpty);
     chart.hidden = isEmpty;
@@ -155,16 +153,15 @@ function setChartEmptyState(isEmpty) {
   }
 }
 
-function hideTooltip() {
-  const tooltip = getElement(DOM_IDS.timeSeriesTooltip);
+function hideTooltip(tooltip) {
+  tooltip = tooltip || getElement(DOM_IDS.timeSeriesTooltip);
   if (!tooltip) return;
   tooltip.hidden = true;
   tooltip.classList.add('hidden');
   tooltip.innerHTML = '';
 }
 
-function showTooltipAt({ left, top, contentHtml }) {
-  const tooltip = getElement(DOM_IDS.timeSeriesTooltip);
+function showTooltipAt({ left, top, contentHtml, tooltip }) {
   if (!tooltip) return;
   tooltip.style.left = `${Math.round(left)}px`;
   tooltip.style.top = `${Math.round(top)}px`;
@@ -191,12 +188,12 @@ function svgPointToClient(svg, x, y) {
   return new DOMPoint(x, y).matrixTransform(ctm);
 }
 
-function ensureTimeSeriesInteractivity(svg) {
+function ensureTimeSeriesInteractivity(svg, tooltip) {
   if (!svg || svg.dataset.tsBound === '1') return;
   svg.dataset.tsBound = '1';
 
   svg.addEventListener('mouseleave', () => {
-    hideTooltip();
+    hideTooltip(tooltip);
     const hoverLine = svg.querySelector('.ts-hover-line');
     const hoverPoint = svg.querySelector('.ts-hover-point');
     if (hoverLine) hoverLine.setAttribute('opacity', '0');
@@ -249,33 +246,28 @@ function ensureTimeSeriesInteractivity(svg) {
     // Keep tooltip within bounds.
     const left = Math.min(Math.max(8, tooltipX + 12), wrapperRect.width - 180);
     const top = Math.min(Math.max(8, tooltipY - 50), wrapperRect.height - 70);
-    showTooltipAt({ left, top, contentHtml: content });
+    showTooltipAt({ left, top, contentHtml: content, tooltip });
   });
 }
 
-function renderTimeSeries(filtered, filters) {
-  const subtitleEl = getElement(DOM_IDS.timeSeriesSubtitle);
-  const svg = getElement(DOM_IDS.timeSeriesChart);
-  if (!subtitleEl || !svg) return;
-
-  ensureTimeSeriesInteractivity(svg);
-
-  const { granularity, points } = buildTimeSeriesPoints(filtered, filters);
+function renderTimeSeriesInto({ svg, emptyEl, tooltip, subtitleEl, points, granularity }) {
+  if (!svg) return;
+  ensureTimeSeriesInteractivity(svg, tooltip);
   if (!points.length) {
-    subtitleEl.textContent = '';
+    if (subtitleEl) subtitleEl.textContent = '';
     svg.innerHTML = '';
     svg.setAttribute('aria-label', 'Collected over time (no data for current filters).');
-    hideTooltip();
-    setChartEmptyState(true);
+    hideTooltip(tooltip);
+    setChartEmptyState({ isEmpty: true, chart: svg, emptyEl });
     return;
   }
-  setChartEmptyState(false);
+  setChartEmptyState({ isEmpty: false, chart: svg, emptyEl });
 
   const bucketLabel =
     granularity === 'day' ? 'day' :
       granularity === 'month' ? 'month' :
         'year';
-  subtitleEl.textContent = '';
+  if (subtitleEl) subtitleEl.textContent = '';
   svg.setAttribute('aria-label', `Collected over time (grouped by ${bucketLabel}).`);
 
   const W = 900;
@@ -361,3 +353,73 @@ function renderTimeSeries(filtered, filters) {
   `.trim();
 }
 
+function renderTimeSeries(filtered, filters) {
+  const subtitleEl = getElement(DOM_IDS.timeSeriesSubtitle);
+  const primarySvg = getElement(DOM_IDS.timeSeriesChart);
+  const primaryEmptyEl = getElement(DOM_IDS.timeSeriesEmpty);
+  const primaryTooltip = getElement(DOM_IDS.timeSeriesTooltip);
+  const modalSvg = getElement(DOM_IDS.timeSeriesChartModal);
+  const modalEmptyEl = getElement(DOM_IDS.timeSeriesEmptyModal);
+  const modalTooltip = getElement(DOM_IDS.timeSeriesTooltipModal);
+
+  if (!primarySvg) return;
+  const { granularity, points } = buildTimeSeriesPoints(filtered, filters);
+  renderTimeSeriesInto({
+    svg: primarySvg,
+    emptyEl: primaryEmptyEl,
+    tooltip: primaryTooltip,
+    subtitleEl,
+    points,
+    granularity
+  });
+  renderTimeSeriesInto({
+    svg: modalSvg,
+    emptyEl: modalEmptyEl,
+    tooltip: modalTooltip,
+    subtitleEl: null,
+    points,
+    granularity
+  });
+}
+
+function bindTimeSeriesModal() {
+  const chart = getElement(DOM_IDS.timeSeriesChart);
+  const modal = getElement(DOM_IDS.timeSeriesModal);
+  const closeBtn = getElement(DOM_IDS.timeSeriesModalClose);
+  if (!chart || !modal || !closeBtn || modal.dataset.bound === '1') return;
+
+  let lastFocused = null;
+  const closeModal = () => {
+    modal.hidden = true;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+    hideTooltip(getElement(DOM_IDS.timeSeriesTooltipModal));
+    if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+  };
+
+  const openModal = () => {
+    lastFocused = document.activeElement;
+    modal.hidden = false;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+    closeBtn.focus();
+  };
+
+  chart.addEventListener('click', openModal);
+  chart.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    openModal();
+  });
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) closeModal();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !modal.hidden) closeModal();
+  });
+
+  modal.dataset.bound = '1';
+}
