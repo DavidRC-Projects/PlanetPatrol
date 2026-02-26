@@ -20,6 +20,7 @@ const DOM_IDS = {
   filterMonth: 'filterMonth',
   filterDay: 'filterDay',
   filterCountry: 'filterCountry',
+  filterMission: 'filterMission',
   filterConstituency: 'filterConstituency',
   filterConstituencyLabel: 'filterConstituencyLabel',
   filterBrandLabelSearch: 'filterBrandLabelSearch',
@@ -36,6 +37,14 @@ const DOM_IDS = {
   timeSeriesTooltipModal: 'timeSeriesTooltipModal',
   topMissionsList: 'topMissionsList',
   topMissionsSummary: 'topMissionsSummary',
+  missionPartnerOpen: 'missionPartnerOpen',
+  missionPartnerModal: 'missionPartnerModal',
+  missionPartnerModalClose: 'missionPartnerModalClose',
+  missionPartnerModalTitle: 'missionPartnerModalTitle',
+  missionPartnerTopBrandsTitle: 'missionPartnerTopBrandsTitle',
+  missionPartnerTopLabelsTitle: 'missionPartnerTopLabelsTitle',
+  missionPartnerTopBrands: 'missionPartnerTopBrands',
+  missionPartnerTopLabels: 'missionPartnerTopLabels',
   topBrandsList: 'topBrandsList',
   topLabelsList: 'topLabelsList'
 };

@@ -50,6 +50,7 @@
       </div>
 
       <section class="filters" id="filters">
+        <label class="filter-field"><span class="filter-label">Mission</span><select id="filterMission"><option value="">All missions</option></select></label>
         <label class="filter-field"><span class="filter-label">Status</span><select id="filterStatus"><option value="all">All</option><option value="moderated">Moderated</option><option value="unmoderated">Unmoderated</option></select></label>
         <label class="filter-field"><span class="filter-label">Min litter pieces</span><input type="number" id="filterMinPieces" min="0" value="0"></label>
         <label class="filter-field"><span class="filter-label">Year</span><select id="filterYear"><option value="">All</option></select></label>
@@ -80,6 +81,7 @@
                 <span class="leaderboard-title">Mission leaderboard</span>
                 <span class="leaderboard-hint">litter pieces collected</span>
               </span>
+              <button id="missionPartnerOpen" class="link-button leaderboard-summary-action" type="button">View top 5 brands and labels</button>
               <span id="topMissionsSummary" class="leaderboard-podium" aria-label="Top 3 missions preview"></span>
             </summary>
 
@@ -128,6 +130,23 @@
         <div id="timeSeriesTooltipModal" class="ts-tooltip hidden" hidden></div>
       </div>
       <p id="timeSeriesEmptyModal" class="muted hidden" hidden>No data for current filters.</p>
+    </div>
+  </div>
+
+  <div id="missionPartnerModal" class="ts-modal hidden" hidden aria-hidden="true">
+    <div class="ts-modal-dialog mission-partner-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="missionPartnerModalTitle">
+      <button id="missionPartnerModalClose" class="ts-modal-close" type="button" aria-label="Close mission partner snapshot">×</button>
+      <h2 id="missionPartnerModalTitle">Top brands and labels for all missions</h2>
+      <div class="mission-partner-lists">
+        <section>
+          <h3 id="missionPartnerTopBrandsTitle">Top 5 brands</h3>
+          <ol id="missionPartnerTopBrands" class="rank-list"></ol>
+        </section>
+        <section>
+          <h3 id="missionPartnerTopLabelsTitle">Top 5 labels</h3>
+          <ol id="missionPartnerTopLabels" class="rank-list"></ol>
+        </section>
+      </div>
     </div>
   </div>
 

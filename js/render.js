@@ -107,20 +107,92 @@ function renderTopCollections(filtered) {
   labelEl.innerHTML = buildTopListItems(topCategoryTotals(filtered, 'label', 50));
 }
 
-function renderMissionLeaderboard(missions) {
+function renderMissionLeaderboard(missions, photos) {
   const tableEl = getElement(DOM_IDS.topMissionsList);
   if (!tableEl) return;
-  const items = topMissionTotals(missions, 20);
+  const items = topMissionTotals(missions, photos, 20);
   tableEl.innerHTML = buildMissionTableRows(items);
 
   const summaryEl = getElement(DOM_IDS.topMissionsSummary);
   if (summaryEl) summaryEl.innerHTML = buildMissionSummary(items);
 }
 
+function renderMissionPartnerSnapshot(filtered, filters, missions) {
+  const openBtn = getElement(DOM_IDS.missionPartnerOpen);
+  const modalTitleEl = getElement(DOM_IDS.missionPartnerModalTitle);
+  const brandsTitleEl = getElement(DOM_IDS.missionPartnerTopBrandsTitle);
+  const labelsTitleEl = getElement(DOM_IDS.missionPartnerTopLabelsTitle);
+  const brandEl = getElement(DOM_IDS.missionPartnerTopBrands);
+  const labelEl = getElement(DOM_IDS.missionPartnerTopLabels);
+  if (!brandEl || !labelEl) return;
+
+  const selectedMission = String(filters?.mission || '').trim();
+  const missionName = selectedMission ? getMissionNameByFilterKey(missions, selectedMission) : '';
+  const contextLabel = missionName || 'all missions';
+  if (openBtn) {
+    openBtn.textContent = missionName
+      ? `View top 5 brands and labels for ${missionName}`
+      : 'View top 5 brands and labels for all missions';
+  }
+  if (modalTitleEl) modalTitleEl.textContent = `Top brands and labels for ${contextLabel}`;
+  if (brandsTitleEl) brandsTitleEl.textContent = `Top 5 brands for ${contextLabel}`;
+  if (labelsTitleEl) labelsTitleEl.textContent = `Top 5 labels for ${contextLabel}`;
+
+  brandEl.innerHTML = buildTopListItems(topCategoryTotals(filtered, 'brand', 5));
+  labelEl.innerHTML = buildTopListItems(topCategoryTotals(filtered, 'label', 5));
+}
+
+function bindMissionPartnerModal() {
+  const openBtn = getElement(DOM_IDS.missionPartnerOpen);
+  const modal = getElement(DOM_IDS.missionPartnerModal);
+  const closeBtn = getElement(DOM_IDS.missionPartnerModalClose);
+  if (!openBtn || !modal || !closeBtn || modal.dataset.bound === '1') return;
+
+  let lastFocused = null;
+  const closeModal = () => {
+    modal.hidden = true;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+    if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+  };
+
+  const openModal = () => {
+    lastFocused = document.activeElement;
+    modal.hidden = false;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+    closeBtn.focus();
+  };
+
+  const handleOpen = (event) => {
+    // Button lives inside <summary>; prevent toggling the accordion when opening modal.
+    event.preventDefault();
+    event.stopPropagation();
+    openModal();
+  };
+  openBtn.addEventListener('click', handleOpen);
+  openBtn.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    handleOpen(event);
+  });
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) closeModal();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !modal.hidden) closeModal();
+  });
+
+  modal.dataset.bound = '1';
+}
+
 /** Renders all filtered dashboard sections. */
-async function renderFilteredView(filtered, filters, missions) {
+async function renderFilteredView(filtered, filters, missions, allPhotos) {
   renderCards(filtered);
   renderTimeSeries(filtered, filters);
-  renderMissionLeaderboard(missions);
+  renderMissionLeaderboard(missions, allPhotos || filtered);
+  renderMissionPartnerSnapshot(filtered, filters, missions);
   renderTopCollections(filtered);
 }

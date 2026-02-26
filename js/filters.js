@@ -1,5 +1,5 @@
 /** Filter logic and UI state extraction. */
-function filterPhotos(photos, locationDictionary, country, constituency, status, minPieces, year, month, day, brandLabelSearch) {
+function filterPhotos(photos, locationDictionary, missions, country, constituency, mission, status, minPieces, year, month, day, brandLabelSearch) {
   photos = photos || {};
   const normalizedBrandLabelSearch = normalizeBrandLabelSearch(brandLabelSearch);
   const out = {};
@@ -9,6 +9,7 @@ function filterPhotos(photos, locationDictionary, country, constituency, status,
     const constituencyInfo = getConstituencyInfoForPhoto(photo, locationDictionary);
     if (country && countryInfo.countryKey !== country) continue;
     if (constituency && constituencyInfo.key !== constituency) continue;
+    if (!photoMatchesMissionKey(photo, mission, missions)) continue;
     if (!passesStatusFilter(photo, status)) continue;
     if (!passesPiecesFilter(photo, minPieces)) continue;
     if (!passesDateFilter(photo, year, month, day)) continue;
@@ -31,6 +32,7 @@ function filterPhotos(photos, locationDictionary, country, constituency, status,
 /** Reads current filter values from the filter controls. */
 function getFilterValues() {
   const ids = [
+    DOM_IDS.filterMission,
     DOM_IDS.filterStatus,
     DOM_IDS.filterMinPieces,
     DOM_IDS.filterYear,
@@ -43,6 +45,7 @@ function getFilterValues() {
   const els = getElements(ids);
   if (!ids.every((id) => els[id])) return null;
   return {
+    mission: els[DOM_IDS.filterMission].value,
     status: els[DOM_IDS.filterStatus].value,
     minPieces: Math.max(0, parseInt(els[DOM_IDS.filterMinPieces].value, 10) || 0),
     year: els[DOM_IDS.filterYear].value,
@@ -52,6 +55,19 @@ function getFilterValues() {
     constituency: els[DOM_IDS.filterConstituency].value,
     brandLabelSearch: els[DOM_IDS.filterBrandLabelSearch].value
   };
+}
+
+function populateMissionOptions(photos, missions, selectedMission = '') {
+  const el = getElement(DOM_IDS.filterMission);
+  if (!el) return '';
+  const options = buildMissionFilterOptions(photos, missions);
+  el.innerHTML = '<option value="">All missions</option>';
+  for (const item of options) {
+    el.appendChild(new Option(`${item.name} (${formatCount(item.pieces)})`, item.key));
+  }
+  const stillValid = options.some((item) => item.key === selectedMission);
+  el.value = stillValid ? selectedMission : '';
+  return el.value;
 }
 
 /** Populates year dropdown from unique photo years. */
@@ -131,10 +147,31 @@ function populateConstituencyOptions(photos, dictionary, selectedCountry = '', s
   return el.value;
 }
 
+function applyMissionCountryExclusivity(values) {
+  const countryEl = getElement(DOM_IDS.filterCountry);
+  const constituencyEl = getElement(DOM_IDS.filterConstituency);
+  if (!countryEl || !constituencyEl) return values;
+
+  const missionSelected = !!values.mission;
+  countryEl.disabled = missionSelected;
+  constituencyEl.disabled = missionSelected;
+
+  if (missionSelected) {
+    // Mission mode: force location filters off to avoid mixed scopes.
+    values.country = '';
+    values.constituency = '';
+    countryEl.value = '';
+    constituencyEl.value = '';
+  }
+  return values;
+}
+
 /** Applies active filters and renders all dashboard sections. */
 async function applyFilters(photos, locationDictionary, missions) {
   const values = getFilterValues();
   if (!values) return;
+  applyMissionCountryExclusivity(values);
+  values.mission = populateMissionOptions(photos, missions, values.mission);
   values.country = populateCountryOptions(photos, locationDictionary, values.country);
   values.constituency = populateConstituencyOptions(
     photos,
@@ -145,8 +182,10 @@ async function applyFilters(photos, locationDictionary, missions) {
   const filtered = filterPhotos(
     photos,
     locationDictionary,
+    missions,
     values.country,
     values.constituency,
+    values.mission,
     values.status,
     values.minPieces,
     values.year,
@@ -154,5 +193,5 @@ async function applyFilters(photos, locationDictionary, missions) {
     values.day,
     values.brandLabelSearch
   );
-  await renderFilteredView(filtered, values, missions);
+  await renderFilteredView(filtered, values, missions, photos);
 }

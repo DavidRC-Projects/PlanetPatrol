@@ -35,6 +35,7 @@ function showError(message) {
 
 function bindFilterAutoRefresh() {
   const ids = [
+    DOM_IDS.filterMission,
     DOM_IDS.filterStatus,
     DOM_IDS.filterMinPieces,
     DOM_IDS.filterYear,
@@ -88,6 +89,7 @@ async function init() {
     populateYearOptions(appState.photos);
     bindFilterAutoRefresh();
     bindTimeSeriesModal();
+    bindMissionPartnerModal();
     void applyFilters(appState.photos, appState.locationDictionary, appState.missions);
   } catch (error) {
     showError(error.message || 'We could not load data from the API. Please try again shortly.');

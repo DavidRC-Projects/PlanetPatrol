@@ -418,6 +418,37 @@ body {
   background: #fbfdfc;
 }
 
+.link-button {
+  border: none;
+  background: none;
+  color: #0f766e;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.link-button:hover {
+  color: #0a5e58;
+}
+
+.link-button:focus-visible {
+  outline: 2px solid rgba(14, 165, 233, 0.7);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.leaderboard-summary-action {
+  margin-top: 0.2rem;
+  margin-bottom: 0.65rem;
+}
+
+.leaderboard-card .leaderboard-podium {
+  margin-top: 0.15rem;
+}
+
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
@@ -1401,4 +1432,53 @@ body.modal-open {
   font-size: 1.45rem;
   line-height: 1;
   cursor: pointer;
+}
+
+.mission-partner-panel {
+  border: 1px solid #e6f4ef;
+}
+
+.mission-partner-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+}
+
+.mission-partner-head .muted {
+  margin: 0;
+}
+
+.mission-partner-total {
+  margin-top: 0.4rem;
+}
+
+.mission-partner-total .value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f766e;
+  letter-spacing: -0.02em;
+}
+
+.mission-partner-total .label {
+  display: block;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.mission-partner-lists {
+  margin-top: 0.85rem;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.mission-partner-lists .rank-list {
+  margin: 0;
+}
+
+.mission-partner-modal-dialog {
+  width: min(900px, 95vw);
 }
