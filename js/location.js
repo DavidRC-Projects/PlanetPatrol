@@ -1,6 +1,6 @@
 /** Location helpers. */
 
-const LOCATION_DICT_STORAGE_KEY = 'planetpatrol.locationDictionary.v1';
+const LOCATION_DICT_STORAGE_KEY = 'planetpatrol.locationDictionary.v2';
 const LOCATION_REQUEST_DELAY_MS = 80;
 const LOCATION_REQUEST_TIMEOUT_MS = 6000;
 const UNKNOWN_LOCATION_LABEL = 'Unknown location';
@@ -37,6 +37,9 @@ const COUNTRY_NAME_ALIASES = {
   'ދިވެހިރާއްޖެ': 'Maldives',
   'ព្រះរាជាណាចក្រ​កម្ពុជា': 'Cambodia'
 };
+const COUNTRY_NAME_ALIASES_BY_KEY = Object.fromEntries(
+  Object.entries(COUNTRY_NAME_ALIASES).map(([key, value]) => [normalizeCountryLookupKey(key), value])
+);
 const COUNTRY_CODE_NAME_ALIASES = {
   bolivia: 'Bolivia',
   'brunei darussalam': 'Brunei',
@@ -172,12 +175,12 @@ function normalizeCountryName(country) {
   if (lower === 'unknown location' || lower === 'unknown country') return UNKNOWN_COUNTRY_LABEL;
   const candidates = [raw, ...raw.split(/[\/|]/g).map((part) => part.trim()).filter(Boolean)];
   for (const candidate of candidates) {
-    const aliased = COUNTRY_NAME_ALIASES[candidate.toLowerCase()] || candidate;
+    const aliased = COUNTRY_NAME_ALIASES_BY_KEY[normalizeCountryLookupKey(candidate)] || candidate;
     const english = getEnglishCountryName(aliased);
     if (english) return english;
-    if (COUNTRY_NAME_ALIASES[candidate.toLowerCase()]) return aliased;
+    if (COUNTRY_NAME_ALIASES_BY_KEY[normalizeCountryLookupKey(candidate)]) return aliased;
   }
-  const aliased = COUNTRY_NAME_ALIASES[lower] || raw;
+  const aliased = COUNTRY_NAME_ALIASES_BY_KEY[normalizeCountryLookupKey(raw)] || raw;
   return getEnglishCountryName(aliased) || aliased;
 }
 

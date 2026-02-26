@@ -55,6 +55,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  grid-column: span 2;
 }
 
 .country-current {
@@ -893,6 +894,10 @@ body {
 
   .country-filters {
     grid-template-columns: 1fr;
+  }
+
+  .country-box {
+    grid-column: auto;
   }
 }
 
