@@ -1461,8 +1461,7 @@ html {
 }
 
 .ts-card-static .chart-wrap {
-  /* Keep chart snug to its container by matching the SVG viewBox aspect ratio. */
-  aspect-ratio: 900 / 280;
+  aspect-ratio: 1000 / 100;
   min-height: 0;
 }
 
