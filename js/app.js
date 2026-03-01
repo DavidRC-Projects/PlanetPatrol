@@ -60,16 +60,6 @@ function warmLocationDictionary(photos) {
   } catch (_) {
     appState.locationDictionary = {};
   }
-
-  // Build missing coordinate labels in background without blocking dashboard render.
-  void getOrBuildLocationDictionary(photos)
-    .then((dictionary) => {
-      appState.locationDictionary = dictionary;
-      void applyFilters(appState.photos, appState.locationDictionary, appState.missions);
-    })
-    .catch(() => {
-      // Keep app usable even if reverse geocoding fails.
-    });
 }
 
 async function init() {

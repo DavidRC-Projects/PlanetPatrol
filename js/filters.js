@@ -28,6 +28,41 @@ function filterPhotos(photos, locationDictionary, missions, country, constituenc
   return out;
 }
 
+let lastCountryConstituencyEnrichmentKey = '';
+
+function getPhotosForCountry(photos, dictionary, selectedCountryKey) {
+  photos = photos || {};
+  const out = {};
+  if (!selectedCountryKey) return out;
+  for (const id of Object.keys(photos)) {
+    const photo = photos[id];
+    const info = getCountryInfoForPhoto(photo, dictionary);
+    if (info.countryKey !== selectedCountryKey) continue;
+    out[id] = photo;
+  }
+  return out;
+}
+
+function maybeEnrichConstituenciesForCountry(photos, dictionary, selectedCountryKey) {
+  if (!selectedCountryKey) return;
+  if (typeof getOrBuildLocationDictionary !== 'function') return;
+  if (typeof hasMissingConstituencyForCountry !== 'function') return;
+  if (typeof isLocationEnrichmentRunning === 'function' && isLocationEnrichmentRunning()) return;
+  if (!hasMissingConstituencyForCountry(photos, dictionary, selectedCountryKey)) return;
+  if (lastCountryConstituencyEnrichmentKey === selectedCountryKey) return;
+
+  lastCountryConstituencyEnrichmentKey = selectedCountryKey;
+  void getOrBuildLocationDictionary(getPhotosForCountry(photos, dictionary, selectedCountryKey))
+    .then((nextDictionary) => {
+      if (typeof appState !== 'undefined' && appState) appState.locationDictionary = nextDictionary;
+      void applyFilters(photos, nextDictionary, (typeof appState !== 'undefined' && appState) ? appState.missions : {});
+    })
+    .catch(() => {
+      // Allow retries if enrichment fails.
+      lastCountryConstituencyEnrichmentKey = '';
+    });
+}
+
 /** Reads current filter values from the filter controls. */
 function getFilterValues() {
   const ids = [
@@ -170,6 +205,7 @@ async function applyFilters(photos, locationDictionary, missions) {
   applyMissionCountryExclusivity(values);
   values.mission = populateMissionOptions(photos, missions, values.mission);
   values.country = populateCountryOptions(photos, locationDictionary, values.country);
+  maybeEnrichConstituenciesForCountry(photos, locationDictionary, values.country);
   values.constituency = populateConstituencyOptions(
     photos,
     locationDictionary,

@@ -11,6 +11,7 @@ const RESOLUTION_KEY_DECIMALS = 2;
 const DICTIONARY_KEY_DECIMALS = RESOLUTION_KEY_DECIMALS;
 const RESOLUTION_NEAREST_MAX_DISTANCE = 0.35;
 const ENABLE_LIVE_REVERSE_GEOCODING = true;
+const LOCATION_REVERSE_GEOCODE_API = '/api/location-name';
 const COUNTRY_NAME_ALIASES = {
   usa: 'United States',
   'u.s.a.': 'United States',
@@ -327,6 +328,29 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function fetchServerReverseGeocode(lat, lon) {
+  const query = `lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
+  const payload = await fetchJsonWithTimeout(`${LOCATION_REVERSE_GEOCODE_API}?${query}`);
+  if (!payload) return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '', constituency: '' };
+  const country = normalizeCountryName(payload?.address?.country);
+  if (country === UNKNOWN_COUNTRY_LABEL) {
+    return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '', constituency: '' };
+  }
+  const countryCode = String(payload?.address?.country_code || '').trim().toUpperCase();
+  const constituency = normalizeConstituencyName(
+    payload?.address?.state_district ||
+    payload?.address?.county ||
+    payload?.address?.city_district ||
+    payload?.address?.city
+  );
+  return {
+    label: constituency ? `${constituency}, ${country}` : country,
+    country,
+    countryCode,
+    constituency
+  };
+}
+
 /** Looks up one coordinate on the internet and returns a label. */
 async function fetchLocationLabel(lat, lon, options = {}) {
   const requireConstituency = options?.requireConstituency === true;
@@ -341,6 +365,14 @@ async function fetchLocationLabel(lat, lon, options = {}) {
     (!requireConstituency || normalizeConstituencyName(best.constituency))
   ) {
     return { ...best, _usedLiveLookup: false };
+  }
+
+  if (requireConstituency) {
+    const fromServer = await fetchServerReverseGeocode(lat, lon);
+    best = mergeLocationResult(best, fromServer);
+    if (best.country !== UNKNOWN_COUNTRY_LABEL && best.constituency) {
+      return { ...best, _usedLiveLookup: true };
+    }
   }
 
   const direct = await fetchPhotonLocation(lat, lon);
