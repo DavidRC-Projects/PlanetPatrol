@@ -181,11 +181,12 @@ function renderNumericTestsTable(type, records) {
     return;
   }
 
+  const showUnits = type !== 'temperature' && type !== 'ph';
   const headerCells = [
     'Date/time',
     'Waterway',
     'Result',
-    'Units'
+    ...(showUnits ? ['Units'] : [])
   ].map((label) => `<th scope="col">${escapeHtml(label)}</th>`).join('');
 
   const rows = ids.slice(0, 200).map((id) => {
@@ -205,10 +206,12 @@ function renderNumericTestsTable(type, records) {
     const cells = [
       `<td title="${escapeHtml(dt)}">${escapeHtml(dt)}</td>`,
       `<td title="${escapeHtml(formatCellValue(waterwayTitle))}">${escapeHtml(formatCellValue(waterway))}</td>`,
-      `<td class="water-tests-result" title="${escapeHtml(formatResultValue(type, value))}">${escapeHtml(formatResultValue(type, value))}</td>`,
-      `<td title="${escapeHtml(formatCellValue(units))}">${escapeHtml(formatCellValue(units))}</td>`
+      `<td class="water-tests-result" title="${escapeHtml(formatResultValue(type, value))}">${escapeHtml(formatResultValue(type, value))}</td>`
     ].join('');
-    return `<tr>${cells}</tr>`;
+    const unitsCell = showUnits
+      ? `<td title="${escapeHtml(formatCellValue(units))}">${escapeHtml(formatCellValue(units))}</td>`
+      : '';
+    return `<tr>${cells}${unitsCell}</tr>`;
   }).join('');
 
   table.innerHTML = `
@@ -263,17 +266,52 @@ function bindWaterTestFilters() {
   const select = getElement(DOM_IDS.filterWaterTestType);
   if (!select || select.dataset.bound === '1') return;
 
+  const modal = getElement(DOM_IDS.waterTestsModal);
+  const closeBtn = getElement(DOM_IDS.waterTestsModalClose);
+
+  const closeModal = () => {
+    if (!modal) return;
+    modal.hidden = true;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+
+    // Reset filter + UI when closing.
+    select.value = '';
+    setWaterTestsStatus('Select a water test to load results.');
+    renderWaterTestsTable('', {});
+  };
+
+  const openModal = () => {
+    if (!modal) return;
+    modal.hidden = false;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+  };
+
+  if (modal && closeBtn && modal.dataset.bound !== '1') {
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) closeModal();
+    });
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !modal.hidden) closeModal();
+    });
+    modal.dataset.bound = '1';
+  }
+
   let lastRequestId = 0;
   const cache = new Map(); // type -> payload
 
   const run = async () => {
     const type = String(select.value || '').trim();
     if (!type) {
-      setWaterTestsStatus('Select a water test from the filter bar to load results.');
-      renderWaterTestsTable('', {});
+      closeModal();
       return;
     }
 
+    openModal();
     const label = getWaterTestLabel(type);
     setWaterTestsStatus(`Loading ${label}…`);
 

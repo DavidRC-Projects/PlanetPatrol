@@ -37,7 +37,6 @@ function bindFilterAutoRefresh() {
   const ids = [
     DOM_IDS.filterMission,
     DOM_IDS.filterStatus,
-    DOM_IDS.filterMinPieces,
     DOM_IDS.filterYear,
     DOM_IDS.filterMonth,
     DOM_IDS.filterDay,

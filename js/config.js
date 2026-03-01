@@ -16,7 +16,6 @@ const DOM_IDS = {
   unmoderated: 'unmoderated',
   totalPhotos: 'totalPhotos',
   filterStatus: 'filterStatus',
-  filterMinPieces: 'filterMinPieces',
   filterYear: 'filterYear',
   filterMonth: 'filterMonth',
   filterDay: 'filterDay',
@@ -49,6 +48,8 @@ const DOM_IDS = {
   topBrandsList: 'topBrandsList',
   topLabelsList: 'topLabelsList',
   filterWaterTestType: 'filterWaterTestType',
+  waterTestsModal: 'waterTestsModal',
+  waterTestsModalClose: 'waterTestsModalClose',
   waterTestsStatus: 'waterTestsStatus',
   waterTestsTable: 'waterTestsTable'
 };

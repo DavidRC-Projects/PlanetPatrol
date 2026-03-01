@@ -58,6 +58,12 @@ body {
   grid-column: span 2;
 }
 
+.water-tests-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .country-current {
   display: flex;
   align-items: center;
@@ -547,7 +553,7 @@ body {
 
 .water-tests-table--coliforms th:nth-child(1),
 .water-tests-table--coliforms td:nth-child(1) {
-  width: 140px;
+  width: 190px;
 }
 
 .water-tests-table--coliforms th:nth-child(3),
@@ -556,6 +562,7 @@ body {
 }
 
 .water-tests-table--coliforms td:nth-child(2),
+.water-tests-table--coliforms td:nth-child(1),
 .water-tests-table--coliforms td:nth-child(4) {
   white-space: normal;
 }
@@ -910,7 +917,8 @@ body {
 .filters select,
 .filters input[type="number"],
 .filters input[type="text"],
-.country-box select {
+.country-box select,
+.water-tests-box select {
   width: 100%;
   min-height: 38px;
   border-radius: 9px;
@@ -923,7 +931,8 @@ body {
 .filters select:focus,
 .filters input[type="number"]:focus,
 .filters input[type="text"]:focus,
-.country-box select:focus {
+.country-box select:focus,
+.water-tests-box select:focus {
   border-color: rgba(2, 132, 199, 0.55);
   outline: 2px solid rgba(2, 132, 199, 0.2);
   outline-offset: 1px;

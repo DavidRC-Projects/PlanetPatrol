@@ -47,27 +47,29 @@
             </label>
           </div>
         </section>
+        <section class="card water-tests-box">
+          <label class="filter-field">
+            <span class="filter-label">Water testing</span>
+            <select id="filterWaterTestType">
+              <option value="">Select test…</option>
+              <option value="coliforms">Coliforms</option>
+              <option value="nitrate">Nitrate</option>
+              <option value="nitrite">Nitrite</option>
+              <option value="ph">pH</option>
+              <option value="phosphate">Phosphate</option>
+              <option value="temperature">Temperature</option>
+            </select>
+          </label>
+        </section>
       </div>
 
       <section class="filters" id="filters">
         <label class="filter-field"><span class="filter-label">Mission</span><select id="filterMission"><option value="">All missions</option></select></label>
         <label class="filter-field"><span class="filter-label">Status</span><select id="filterStatus"><option value="all">All</option><option value="moderated">Moderated</option><option value="unmoderated">Unpublished</option></select></label>
-        <label class="filter-field"><span class="filter-label">Min litter pieces</span><input type="number" id="filterMinPieces" min="0" value="0"></label>
         <label class="filter-field"><span class="filter-label">Year</span><select id="filterYear"><option value="">All</option></select></label>
         <label class="filter-field"><span class="filter-label">Month (selected year)</span><select id="filterMonth"><option value="">All</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select></label>
         <label class="filter-field"><span class="filter-label">Day of month</span><select id="filterDay"><option value="">All</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></label>
-        <label class="filter-field filter-field--wide"><span class="filter-label">Brand / label</span><input id="filterBrandLabelSearch" type="text" placeholder="Type exact brand or label" autocomplete="off"></label>
-        <label class="filter-field"><span class="filter-label">Water testing</span>
-          <select id="filterWaterTestType">
-            <option value="">Select test…</option>
-            <option value="coliforms">Coliforms</option>
-            <option value="nitrate">Nitrate</option>
-            <option value="nitrite">Nitrite</option>
-            <option value="ph">pH</option>
-            <option value="phosphate">Phosphate</option>
-            <option value="temperature">Temperature</option>
-          </select>
-        </label>
+        <label class="filter-field"><span class="filter-label">Brand / label</span><input id="filterBrandLabelSearch" type="text" placeholder="Type exact brand or label" autocomplete="off"></label>
       </section>
 
       <div class="insights-grid" id="insights">
@@ -129,16 +131,19 @@
         </div>
       </section>
 
-      <section class="panel" id="waterTestsPanel">
-        <h2>Water testing</h2>
-        <p id="waterTestsStatus" class="muted">Select a water test from the filter bar to load results.</p>
-        <div class="water-tests-table-wrap" role="region" aria-label="Water testing results" tabindex="0">
-          <table id="waterTestsTable" class="water-tests-table"></table>
-        </div>
-      </section>
-
     </div>
   </main>
+
+  <div id="waterTestsModal" class="ts-modal hidden" hidden aria-hidden="true">
+    <div class="ts-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="waterTestsModalTitle">
+      <button id="waterTestsModalClose" class="ts-modal-close" type="button" aria-label="Close water testing results">×</button>
+      <h2 id="waterTestsModalTitle">Water testing</h2>
+      <p id="waterTestsStatus" class="muted">Select a water test to load results.</p>
+      <div class="water-tests-table-wrap" role="region" aria-label="Water testing results" tabindex="0">
+        <table id="waterTestsTable" class="water-tests-table"></table>
+      </div>
+    </div>
+  </div>
 
   <div id="timeSeriesModal" class="ts-modal hidden" hidden aria-hidden="true">
     <div class="ts-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="timeSeriesModalTitle">

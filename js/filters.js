@@ -1,5 +1,5 @@
 /** Filter logic and UI state extraction. */
-function filterPhotos(photos, locationDictionary, missions, country, constituency, mission, status, minPieces, year, month, day, brandLabelSearch) {
+function filterPhotos(photos, locationDictionary, missions, country, constituency, mission, status, year, month, day, brandLabelSearch) {
   photos = photos || {};
   const normalizedBrandLabelSearch = normalizeBrandLabelSearch(brandLabelSearch);
   const out = {};
@@ -11,7 +11,6 @@ function filterPhotos(photos, locationDictionary, missions, country, constituenc
     if (constituency && constituencyInfo.key !== constituency) continue;
     if (!photoMatchesMissionKey(photo, mission, missions)) continue;
     if (!passesStatusFilter(photo, status)) continue;
-    if (!passesPiecesFilter(photo, minPieces)) continue;
     if (!passesDateFilter(photo, year, month, day)) continue;
     if (!passesBrandLabelFilter(photo, brandLabelSearch)) continue;
     if (!normalizedBrandLabelSearch) {
@@ -34,7 +33,6 @@ function getFilterValues() {
   const ids = [
     DOM_IDS.filterMission,
     DOM_IDS.filterStatus,
-    DOM_IDS.filterMinPieces,
     DOM_IDS.filterYear,
     DOM_IDS.filterMonth,
     DOM_IDS.filterDay,
@@ -47,7 +45,6 @@ function getFilterValues() {
   return {
     mission: els[DOM_IDS.filterMission].value,
     status: els[DOM_IDS.filterStatus].value,
-    minPieces: Math.max(0, parseInt(els[DOM_IDS.filterMinPieces].value, 10) || 0),
     year: els[DOM_IDS.filterYear].value,
     month: els[DOM_IDS.filterMonth].value,
     day: els[DOM_IDS.filterDay].value,
@@ -187,7 +184,6 @@ async function applyFilters(photos, locationDictionary, missions) {
     values.constituency,
     values.mission,
     values.status,
-    values.minPieces,
     values.year,
     values.month,
     values.day,
