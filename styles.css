@@ -492,6 +492,95 @@ body {
   background: rgba(15, 118, 110, 0.015);
 }
 
+.water-tests-table-wrap {
+  max-height: 420px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+
+.water-tests-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  table-layout: fixed;
+}
+
+.water-tests-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(246, 251, 249, 0.95);
+  border-bottom: 1px solid rgba(145, 180, 201, 0.35);
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.water-tests-table tbody td {
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid rgba(231, 239, 237, 0.8);
+  vertical-align: top;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.water-tests-table--numeric th:nth-child(1),
+.water-tests-table--numeric td:nth-child(1) {
+  width: 190px;
+}
+
+.water-tests-table--numeric th:nth-child(3),
+.water-tests-table--numeric td:nth-child(3) {
+  width: 110px;
+}
+
+.water-tests-table--numeric th:nth-child(4),
+.water-tests-table--numeric td:nth-child(4) {
+  width: 90px;
+}
+
+.water-tests-table--coliforms th:nth-child(1),
+.water-tests-table--coliforms td:nth-child(1) {
+  width: 140px;
+}
+
+.water-tests-table--coliforms th:nth-child(3),
+.water-tests-table--coliforms td:nth-child(3) {
+  width: 140px;
+}
+
+.water-tests-table--coliforms td:nth-child(2),
+.water-tests-table--coliforms td:nth-child(4) {
+  white-space: normal;
+}
+
+.water-tests-table tbody tr:hover td {
+  background: rgba(14, 165, 233, 0.06);
+}
+
+.water-tests-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.86rem;
+  color: rgba(17, 35, 44, 0.9);
+}
+
+.water-tests-result {
+  font-weight: 800;
+  color: #0e625d;
+}
+
+.water-tests-empty {
+  padding: 1rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .leaderboard-rank {
   white-space: nowrap;
   color: #25423a;

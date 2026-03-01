@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 const admin = require('firebase-admin');
 
 const PORT = Number(process.env.PORT) || 8787;
@@ -8,6 +9,9 @@ const HOST = process.env.HOST || '0.0.0.0';
 const ROOT_DIR = __dirname;
 const PHOTOS_CACHE_TTL_MS = Number(process.env.PHOTOS_CACHE_TTL_MS) || 5 * 60 * 1000;
 const MISSIONS_CACHE_TTL_MS = Number(process.env.MISSIONS_CACHE_TTL_MS) || 5 * 60 * 1000;
+const WATER_TESTS_CACHE_TTL_MS = Number(process.env.WATER_TESTS_CACHE_TTL_MS) || 5 * 60 * 1000;
+const LOCATION_CACHE_TTL_MS = Number(process.env.LOCATION_CACHE_TTL_MS) || 24 * 60 * 60 * 1000;
+const LOCATION_CACHE_MAX_SIZE = Number(process.env.LOCATION_CACHE_MAX_SIZE) || 5000;
 const SERVICE_ACCOUNT_PATH = process.env.SERVICE_ACCOUNT_PATH
   ? path.resolve(process.env.SERVICE_ACCOUNT_PATH)
   : path.join(ROOT_DIR, 'plastic-patrol-fd3b3-firebase-adminsdk-wzxjy-d21b2320fa.json');
@@ -53,6 +57,10 @@ let photosCache = { payload: null, expiresAt: 0 };
 let inflightPhotosFetch = null;
 let missionsCache = { payload: null, expiresAt: 0 };
 let inflightMissionsFetch = null;
+const waterTestsCache = new Map(); // type -> { payload, expiresAt }
+const inflightWaterTestsFetch = new Map(); // type -> Promise
+const locationCache = new Map(); // "lat,lon" -> { payload, expiresAt }
+const inflightLocationFetch = new Map(); // "lat,lon" -> Promise
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -79,6 +87,15 @@ function serializeFirestoreValue(val) {
   return val;
 }
 
+const WATER_TEST_COLLECTIONS = new Set([
+  'coliforms',
+  'nitrate',
+  'nitrite',
+  'ph',
+  'phosphate',
+  'temperature'
+]);
+
 async function fetchFirestorePhotos() {
   const snapshot = await db.collection('photos').get();
   const photos = {};
@@ -102,6 +119,22 @@ async function fetchFirestoreMissions() {
     };
   });
   return { missions };
+}
+
+async function fetchFirestoreWaterTests(type, limit) {
+  const safeType = String(type || '').trim();
+  if (!WATER_TEST_COLLECTIONS.has(safeType)) {
+    const allowed = [...WATER_TEST_COLLECTIONS].sort().join(', ');
+    throw new Error(`Invalid water test type "${safeType}". Allowed: ${allowed}`);
+  }
+
+  const n = Math.max(1, Math.min(2000, Number(limit) || 500));
+  const snapshot = await db.collection(safeType).limit(n).get();
+  const records = {};
+  snapshot.forEach((doc) => {
+    records[doc.id] = serializeFirestoreValue(doc.data());
+  });
+  return { type: safeType, records, limit: n };
 }
 
 async function getPhotosWithCache() {
@@ -163,9 +196,132 @@ async function getMissionsWithCache() {
   return inflightMissionsFetch;
 }
 
+async function getWaterTestsWithCache(type, limit) {
+  const safeType = String(type || '').trim();
+  if (!WATER_TEST_COLLECTIONS.has(safeType)) {
+    const allowed = [...WATER_TEST_COLLECTIONS].sort();
+    return {
+      type: safeType,
+      records: {},
+      limit: Number(limit) || 0,
+      available: allowed,
+      error: 'Invalid water test type. Choose one of the available values.'
+    };
+  }
+
+  const now = Date.now();
+  const cached = waterTestsCache.get(safeType);
+  if (cached?.payload && cached.expiresAt > now) {
+    return cached.payload;
+  }
+
+  const inflight = inflightWaterTestsFetch.get(safeType);
+  if (inflight) return inflight;
+
+  const p = (async () => {
+    try {
+      const payload = await fetchFirestoreWaterTests(safeType, limit);
+      waterTestsCache.set(safeType, {
+        payload,
+        expiresAt: Date.now() + WATER_TESTS_CACHE_TTL_MS
+      });
+      return payload;
+    } catch (error) {
+      if (cached?.payload) return cached.payload;
+      throw error;
+    } finally {
+      inflightWaterTestsFetch.delete(safeType);
+    }
+  })();
+
+  inflightWaterTestsFetch.set(safeType, p);
+  return p;
+}
+
 function sendJson(res, statusCode, body) {
   res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(body));
+}
+
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function fetchJsonHttps(url, { timeoutMs = 6500, headers = {} } = {}) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(url, { method: 'GET', headers }, (resp) => {
+      const status = resp.statusCode || 0;
+      let raw = '';
+      resp.setEncoding('utf8');
+      resp.on('data', (chunk) => { raw += chunk; });
+      resp.on('end', () => {
+        if (status < 200 || status >= 300) {
+          reject(new Error(`upstream status ${status}`));
+          return;
+        }
+        try {
+          resolve(JSON.parse(raw));
+        } catch (_) {
+          reject(new Error('upstream returned invalid JSON'));
+        }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(timeoutMs, () => {
+      req.destroy(new Error('upstream timeout'));
+    });
+    req.end();
+  });
+}
+
+function getLocationCacheKey(lat, lon) {
+  return `${Number(lat).toFixed(4)},${Number(lon).toFixed(4)}`;
+}
+
+async function reverseGeocodeWithCache(lat, lon) {
+  const key = getLocationCacheKey(lat, lon);
+  const now = Date.now();
+
+  const cached = locationCache.get(key);
+  if (cached?.payload && cached.expiresAt > now) return cached.payload;
+
+  const inflight = inflightLocationFetch.get(key);
+  if (inflight) return inflight;
+
+  const p = (async () => {
+    try {
+      // Nominatim reverse geocode. zoom=10 tends to include county/state_district.
+      const query = new URLSearchParams({
+        format: 'jsonv2',
+        zoom: '10',
+        addressdetails: '1',
+        lat: String(lat),
+        lon: String(lon)
+      });
+
+      const payload = await fetchJsonHttps(`https://nominatim.openstreetmap.org/reverse?${query.toString()}`, {
+        timeoutMs: 6500,
+        headers: {
+          // Nominatim usage policy asks for a valid UA identifying your app.
+          'User-Agent': 'PlanetPatrolDashboard/1.0 (self-hosted)',
+          'Accept': 'application/json'
+        }
+      });
+
+      // Basic LRU-ish eviction by clearing oldest insertion order when too large.
+      if (locationCache.size >= LOCATION_CACHE_MAX_SIZE) {
+        const firstKey = locationCache.keys().next().value;
+        if (firstKey) locationCache.delete(firstKey);
+      }
+      locationCache.set(key, { payload, expiresAt: now + LOCATION_CACHE_TTL_MS });
+      return payload;
+    } finally {
+      inflightLocationFetch.delete(key);
+    }
+  })();
+
+  inflightLocationFetch.set(key, p);
+  return p;
 }
 
 function sendFile(res, filePath) {
@@ -206,6 +362,42 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, payload);
     } catch (error) {
       sendJson(res, 500, { error: `Firestore read failed: ${error.message}` });
+    }
+    return;
+  }
+
+  if (req.url && req.url.startsWith('/api/water-tests')) {
+    try {
+      const url = new URL(req.url, `http://${HOST}:${PORT}`);
+      const type = url.searchParams.get('type') || '';
+      const limit = url.searchParams.get('limit') || '';
+      const payload = await getWaterTestsWithCache(type, limit);
+      if (payload?.error) {
+        sendJson(res, 400, payload);
+        return;
+      }
+      sendJson(res, 200, payload);
+    } catch (error) {
+      sendJson(res, 500, { error: `Firestore read failed: ${error.message}` });
+    }
+    return;
+  }
+
+  if (req.url && req.url.startsWith('/api/location-name')) {
+    try {
+      const url = new URL(req.url, `http://${HOST}:${PORT}`);
+      const lat = Number(url.searchParams.get('lat'));
+      const lon = Number(url.searchParams.get('lon'));
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        sendJson(res, 400, { error: 'Missing or invalid lat/lon.' });
+        return;
+      }
+      const safeLat = clamp(lat, -90, 90);
+      const safeLon = clamp(lon, -180, 180);
+      const payload = await reverseGeocodeWithCache(safeLat, safeLon);
+      sendJson(res, 200, payload);
+    } catch (error) {
+      sendJson(res, 502, { error: `Reverse geocode failed: ${error.message}` });
     }
     return;
   }

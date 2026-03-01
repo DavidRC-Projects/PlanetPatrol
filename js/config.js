@@ -1,6 +1,7 @@
 /** Data source URLs. */
 const FIRESTORE_PROXY_URL = '/api/photos';
 const MISSIONS_PROXY_URL = '/api/missions';
+const WATER_TESTS_PROXY_URL = '/api/water-tests';
 const ENABLE_AREA_LOOKUP = true;
 
 /** DOM element IDs. */
@@ -46,5 +47,8 @@ const DOM_IDS = {
   missionPartnerTopBrands: 'missionPartnerTopBrands',
   missionPartnerTopLabels: 'missionPartnerTopLabels',
   topBrandsList: 'topBrandsList',
-  topLabelsList: 'topLabelsList'
+  topLabelsList: 'topLabelsList',
+  filterWaterTestType: 'filterWaterTestType',
+  waterTestsStatus: 'waterTestsStatus',
+  waterTestsTable: 'waterTestsTable'
 };
