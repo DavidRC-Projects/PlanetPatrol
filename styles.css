@@ -1461,11 +1461,14 @@ html {
 }
 
 .ts-card-static .chart-wrap {
-  min-height: 260px;
+  /* Keep chart snug to its container by matching the SVG viewBox aspect ratio. */
+  aspect-ratio: 900 / 280;
+  min-height: 0;
 }
 
 .ts-card-static .time-series {
-  height: clamp(250px, 34vh, 380px);
+  width: 100%;
+  height: 100%;
 }
 
 .time-series--interactive {
