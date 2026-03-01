@@ -121,7 +121,7 @@ function renderColiformsTable(records, dictionary) {
   }
 
   const headerCells = [
-    'Date',
+    'Date/time',
     'Waterway',
     'Result',
     'County, Country'
@@ -130,7 +130,7 @@ function renderColiformsTable(records, dictionary) {
   const rows = ids.slice(0, 200).map((id) => {
     const data = records[id] || {};
     const { value } = getPrimaryResult('coliforms', data);
-    const date = formatDateOnly(data.dateTime);
+    const date = formatDateTime(data.dateTime);
     const waterway = data?.waterwayName || '';
 
     const countryInfo = typeof getCountryInfoForPhoto === 'function'
@@ -182,7 +182,7 @@ function renderNumericTestsTable(type, records) {
   }
 
   const headerCells = [
-    'Date',
+    'Date/time',
     'Waterway',
     'Result',
     'Units'
@@ -191,7 +191,7 @@ function renderNumericTestsTable(type, records) {
   const rows = ids.slice(0, 200).map((id) => {
     const data = records[id] || {};
     const { value, units } = getPrimaryResult(type, data);
-    const dt = formatDateOnly(data.dateTime);
+    const dt = formatDateTime(data.dateTime);
     const lat = data?.location?.latitude;
     const lng = data?.location?.longitude;
     const waterway = data?.waterwayName || '';
