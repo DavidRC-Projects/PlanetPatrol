@@ -328,13 +328,20 @@ function sleep(ms) {
 }
 
 /** Looks up one coordinate on the internet and returns a label. */
-async function fetchLocationLabel(lat, lon) {
+async function fetchLocationLabel(lat, lon, options = {}) {
+  const requireConstituency = options?.requireConstituency === true;
   // Prefer local precomputed resolution data first for speed and reliability.
   let best = await fetchCountryFromResolutionData(lat, lon);
   if (!ENABLE_LIVE_REVERSE_GEOCODING) return { ...best, _usedLiveLookup: false };
-  // If we already know the country from local resolution data, return immediately.
+  // If we already know the country from local resolution data, return immediately (unless we
+  // still need a local area like county/constituency).
   // This keeps country dropdown population fast and avoids long startup delays.
-  if (best.country !== UNKNOWN_COUNTRY_LABEL) return { ...best, _usedLiveLookup: false };
+  if (
+    best.country !== UNKNOWN_COUNTRY_LABEL &&
+    (!requireConstituency || normalizeConstituencyName(best.constituency))
+  ) {
+    return { ...best, _usedLiveLookup: false };
+  }
 
   const direct = await fetchPhotonLocation(lat, lon);
   best = mergeLocationResult(best, direct);
@@ -567,7 +574,7 @@ async function getOrBuildLocationDictionary(photos, options = {}) {
       const alreadyResolved = existing.country !== UNKNOWN_COUNTRY_LABEL;
       const hasLocalArea = !!normalizeConstituencyName(existing.constituency);
       if (alreadyResolved && (hasLocalArea || !ENABLE_LIVE_REVERSE_GEOCODING)) continue;
-      const fetched = await fetchLocationLabel(c.lat, c.lon);
+      const fetched = await fetchLocationLabel(c.lat, c.lon, { requireConstituency: !hasLocalArea });
       dictionary[c.key] = normalizeLocationEntry(fetched);
       countryCodeLookupCache.delete(dictionary);
       saveLocationDictionary(dictionary, storageKey);

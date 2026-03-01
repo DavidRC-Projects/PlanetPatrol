@@ -41,8 +41,10 @@ function getCategoryValue(category, fieldName) {
 
 /** Returns location coordinates from photo, if present. */
 function getPhotoCoordinates(photo) {
-  const lat = Number(photo?.location?._latitude);
-  const lon = Number(photo?.location?._longitude);
+  // Support both Firestore GeoPoint serialization ({ _latitude, _longitude }) and
+  // plain coordinate objects ({ latitude, longitude }).
+  const lat = Number(photo?.location?._latitude ?? photo?.location?.latitude);
+  const lon = Number(photo?.location?._longitude ?? photo?.location?.longitude);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
   if (lat === 0 && lon === 0) return null;
   return { lat, lon };
