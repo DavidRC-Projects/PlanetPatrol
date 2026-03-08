@@ -12,6 +12,8 @@ const DICTIONARY_KEY_DECIMALS = RESOLUTION_KEY_DECIMALS;
 const RESOLUTION_NEAREST_MAX_DISTANCE = 0.35;
 const ENABLE_LIVE_REVERSE_GEOCODING = true;
 const LOCATION_REVERSE_GEOCODE_API = '/api/location-name';
+/** Client-side Photon/Nominatim fail in production (CORS, connection refused). Only use when on localhost. */
+const USE_CLIENT_FALLBACK_GEOCODING = typeof window !== 'undefined' && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(window.location?.origin || '');
 const COUNTRY_NAME_ALIASES = {
   usa: 'United States',
   'u.s.a.': 'United States',
@@ -367,13 +369,16 @@ async function fetchLocationLabel(lat, lon, options = {}) {
     return { ...best, _usedLiveLookup: false };
   }
 
-  if (requireConstituency) {
+  // Try server when we need country or constituency (client-side Photon/Nominatim fail in production).
+  if (best.country === UNKNOWN_COUNTRY_LABEL || requireConstituency) {
     const fromServer = await fetchServerReverseGeocode(lat, lon);
     best = mergeLocationResult(best, fromServer);
-    if (best.country !== UNKNOWN_COUNTRY_LABEL && best.constituency) {
+    if (best.country !== UNKNOWN_COUNTRY_LABEL && (!requireConstituency || best.constituency)) {
       return { ...best, _usedLiveLookup: true };
     }
   }
+
+  if (!USE_CLIENT_FALLBACK_GEOCODING) return { ...best, _usedLiveLookup: false };
 
   const direct = await fetchPhotonLocation(lat, lon);
   best = mergeLocationResult(best, direct);
@@ -615,6 +620,7 @@ async function getOrBuildLocationDictionary(photos, options = {}) {
   const dictionary = loadLocationDictionary(storageKey);
   const coords = getUniqueCoordinates(photos);
 
+  const requireConstituency = options.requireConstituency === true;
   locationEnrichmentJobs += 1;
   try {
     for (const c of coords) {
@@ -622,7 +628,7 @@ async function getOrBuildLocationDictionary(photos, options = {}) {
       const alreadyResolved = existing.country !== UNKNOWN_COUNTRY_LABEL;
       const hasLocalArea = !!normalizeConstituencyName(existing.constituency);
       if (alreadyResolved && (hasLocalArea || !ENABLE_LIVE_REVERSE_GEOCODING)) continue;
-      const fetched = await fetchLocationLabel(c.lat, c.lon, { requireConstituency: !hasLocalArea });
+      const fetched = await fetchLocationLabel(c.lat, c.lon, { requireConstituency });
       dictionary[c.key] = normalizeLocationEntry(fetched);
       countryCodeLookupCache.delete(dictionary);
       saveLocationDictionary(dictionary, storageKey);

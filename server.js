@@ -293,6 +293,23 @@ function getLocationCacheKey(lat, lon) {
   return `${Number(lat).toFixed(4)},${Number(lon).toFixed(4)}`;
 }
 
+/** Convert Photon GeoJSON response to Nominatim-like shape for client compatibility. */
+function photonToNominatimShape(photonPayload) {
+  const props = photonPayload?.features?.[0]?.properties || {};
+  const country = props.country || '';
+  const cc = String(props.countrycode || '').trim().toLowerCase();
+  return {
+    address: {
+      country,
+      country_code: cc,
+      state_district: props.state || props.district || '',
+      county: props.county || '',
+      city_district: props.district || '',
+      city: props.city || props.name || ''
+    }
+  };
+}
+
 async function reverseGeocodeWithCache(lat, lon) {
   const key = getLocationCacheKey(lat, lon);
   const now = Date.now();
@@ -305,6 +322,24 @@ async function reverseGeocodeWithCache(lat, lon) {
 
   const p = (async () => {
     try {
+      // Try Photon first (different rate limits than Nominatim).
+      try {
+        const photonQuery = new URLSearchParams({ lat: String(lat), lon: String(lon) });
+        const photonPayload = await fetchJsonHttps(`https://photon.komoot.io/reverse?${photonQuery.toString()}`, {
+          timeoutMs: 5000,
+          headers: { 'User-Agent': 'PlanetPatrolDashboard/1.0 (self-hosted)' }
+        });
+        if (photonPayload?.features?.[0]?.properties?.country) {
+          const payload = photonToNominatimShape(photonPayload);
+          if (locationCache.size >= LOCATION_CACHE_MAX_SIZE) {
+            const firstKey = locationCache.keys().next().value;
+            if (firstKey) locationCache.delete(firstKey);
+          }
+          locationCache.set(key, { payload, expiresAt: now + LOCATION_CACHE_TTL_MS });
+          return payload;
+        }
+      } catch (_) { /* fall through to Nominatim */ }
+
       // Nominatim reverse geocode. zoom=10 tends to include county/state_district.
       const query = new URLSearchParams({
         format: 'jsonv2',
@@ -317,7 +352,6 @@ async function reverseGeocodeWithCache(lat, lon) {
       const payload = await fetchJsonHttps(`https://nominatim.openstreetmap.org/reverse?${query.toString()}`, {
         timeoutMs: 6500,
         headers: {
-          // Nominatim usage policy asks for a valid UA identifying your app.
           'User-Agent': 'PlanetPatrolDashboard/1.0 (self-hosted)',
           'Accept': 'application/json'
         }

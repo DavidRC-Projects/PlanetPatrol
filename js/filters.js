@@ -52,7 +52,7 @@ function maybeEnrichConstituenciesForCountry(photos, dictionary, selectedCountry
   if (lastCountryConstituencyEnrichmentKey === selectedCountryKey) return;
 
   lastCountryConstituencyEnrichmentKey = selectedCountryKey;
-  void getOrBuildLocationDictionary(getPhotosForCountry(photos, dictionary, selectedCountryKey))
+  void getOrBuildLocationDictionary(getPhotosForCountry(photos, dictionary, selectedCountryKey), { requireConstituency: true })
     .then((nextDictionary) => {
       if (typeof appState !== 'undefined' && appState) {
         appState.locationDictionary = { ...appState.locationDictionary, ...nextDictionary };
