@@ -90,11 +90,56 @@ function getPrimaryResult(type, record) {
   return { value: undefined, units: undefined };
 }
 
-function getActiveLocationDictionary() {
-  // Prefer the warmed dictionary from app.js, but fallback to localStorage.
-  if (typeof appState !== 'undefined' && appState?.locationDictionary) return appState.locationDictionary;
-  if (typeof loadLocationDictionary === 'function') return loadLocationDictionary();
+const WATER_TESTS_DICTIONARY_STORAGE_KEY = 'planetpatrol.waterTestsLocationDictionary.v1';
+
+/** Returns the water-tests-specific location dictionary. Never overwrites appState.locationDictionary. */
+function getWaterTestsLocationDictionary() {
+  if (typeof loadLocationDictionary === 'function') return loadLocationDictionary(WATER_TESTS_DICTIONARY_STORAGE_KEY);
   return {};
+}
+
+function hasLocationData(records) {
+  if (!records || typeof records !== 'object') return false;
+  for (const id of Object.keys(records)) {
+    const r = records[id];
+    if (r?.location?.latitude != null && r?.location?.longitude != null) return true;
+    if (r?.location?._latitude != null && r?.location?._longitude != null) return true;
+  }
+  return false;
+}
+
+function filterWaterTestRecordsByCountry(records, dictionary, selectedCountryKey) {
+  if (!records || !selectedCountryKey) return records || {};
+  const out = {};
+  for (const id of Object.keys(records)) {
+    const info = typeof getCountryInfoForPhoto === 'function'
+      ? getCountryInfoForPhoto(records[id], dictionary)
+      : { countryKey: '' };
+    if (info.countryKey === selectedCountryKey) out[id] = records[id];
+  }
+  return out;
+}
+
+function updateWaterTestsCountryFilter(records, dictionary) {
+  const el = getElement(DOM_IDS.filterWaterTestCountry);
+  if (!el) return;
+  const countries = typeof buildCountryCounts === 'function'
+    ? buildCountryCounts(records || {}, dictionary || {})
+    : [];
+  el.innerHTML = '<option value="">All countries</option>';
+  for (const item of countries) {
+    const flag = typeof countryCodeToFlag === 'function' ? countryCodeToFlag(item.countryCode) : '🌍';
+    el.appendChild(new Option(`${flag} ${item.country} (${item.count})`, item.key));
+  }
+}
+
+function renderWaterTestsTableWithCountryFilter(type, records, dictionary) {
+  const countryEl = getElement(DOM_IDS.filterWaterTestCountry);
+  const selectedCountry = countryEl ? countryEl.value : '';
+  const filtered = selectedCountry
+    ? filterWaterTestRecordsByCountry(records, dictionary, selectedCountry)
+    : (records || {});
+  renderWaterTestsTable(type, filtered, dictionary);
 }
 
 function getSortedRecordIdsByNewest(records) {
@@ -269,6 +314,8 @@ function bindWaterTestFilters() {
   const modal = getElement(DOM_IDS.waterTestsModal);
   const closeBtn = getElement(DOM_IDS.waterTestsModalClose);
 
+  const countryFilterEl = getElement(DOM_IDS.filterWaterTestCountry);
+
   const closeModal = () => {
     if (!modal) return;
     modal.hidden = true;
@@ -277,6 +324,7 @@ function bindWaterTestFilters() {
     document.body.classList.remove('modal-open');
 
     select.value = '';
+    if (countryFilterEl) countryFilterEl.value = '';
     setWaterTestsStatus('Select a water test to load results.');
     renderWaterTestsTable('', {});
   };
@@ -302,6 +350,7 @@ function bindWaterTestFilters() {
 
   let lastRequestId = 0;
   const cache = new Map();
+  let currentWaterTestState = { type: '', records: {}, dictionary: {} };
 
   const run = async () => {
     const type = String(select.value || '').trim();
@@ -309,6 +358,7 @@ function bindWaterTestFilters() {
       closeModal();
       return;
     }
+    if (countryFilterEl) countryFilterEl.value = '';
 
     openModal();
     const label = getWaterTestLabel(type);
@@ -322,18 +372,23 @@ function bindWaterTestFilters() {
       if (requestId !== lastRequestId) return;
 
       const count = Object.keys(payload.records || {}).length;
-      const dictionary = getActiveLocationDictionary();
+      const dictionary = getWaterTestsLocationDictionary();
+      currentWaterTestState = { type, records: payload.records, dictionary };
       setWaterTestsStatus(`Showing ${count.toLocaleString()} ${label} results (up to 500).`);
-      renderWaterTestsTable(type, payload.records, dictionary);
+      updateWaterTestsCountryFilter(payload.records, dictionary);
+      renderWaterTestsTableWithCountryFilter(type, payload.records, dictionary);
 
-      if (type === 'coliforms' && typeof getOrBuildLocationDictionary === 'function') {
+      if (typeof getOrBuildLocationDictionary === 'function' && hasLocationData(payload.records)) {
         setWaterTestsStatus(`Showing ${count.toLocaleString()} ${label} results (up to 500). Resolving locations…`);
-        void getOrBuildLocationDictionary(payload.records)
+        void getOrBuildLocationDictionary(payload.records, {
+          storageKey: WATER_TESTS_DICTIONARY_STORAGE_KEY
+        })
           .then((nextDictionary) => {
             if (requestId !== lastRequestId) return;
-            if (typeof appState !== 'undefined' && appState) appState.locationDictionary = nextDictionary;
+            currentWaterTestState = { type, records: payload.records, dictionary: nextDictionary };
             setWaterTestsStatus(`Showing ${count.toLocaleString()} ${label} results (up to 500).`);
-            renderWaterTestsTable(type, payload.records, nextDictionary);
+            updateWaterTestsCountryFilter(payload.records, nextDictionary);
+            renderWaterTestsTableWithCountryFilter(type, payload.records, nextDictionary);
           })
           .catch(() => {
             if (requestId !== lastRequestId) return;
@@ -348,6 +403,13 @@ function bindWaterTestFilters() {
   };
 
   select.addEventListener('change', () => { void run(); });
+  if (countryFilterEl && countryFilterEl.dataset.bound !== '1') {
+    countryFilterEl.addEventListener('change', () => {
+      const { type, records, dictionary } = currentWaterTestState;
+      if (type && records) renderWaterTestsTableWithCountryFilter(type, records, dictionary);
+    });
+    countryFilterEl.dataset.bound = '1';
+  }
   select.dataset.bound = '1';
 
   void run();
