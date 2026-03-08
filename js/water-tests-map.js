@@ -2,6 +2,8 @@
  * Water tests map using Leaflet. Circle markers for clarity; focused on UK.
  */
 
+const HEATMAP_DICTIONARY_STORAGE_KEY = 'planetpatrol.waterTestsLocationDictionary.v1';
+
 const UK_BOUNDS = [[49.5, -8.2], [60.9, 2.1]];
 const UK_CENTER = [54.5, -2.5];
 const UK_ZOOM = 6;
@@ -286,6 +288,32 @@ function filterRecordsByTime(records, year, month) {
   return filtered;
 }
 
+function filterRecordsByCountry(records, dictionary, selectedCountryKey) {
+  if (!records || !selectedCountryKey) return records || {};
+  const out = {};
+  for (const id of Object.keys(records)) {
+    const info = typeof getCountryInfoForPhoto === 'function'
+      ? getCountryInfoForPhoto(records[id], dictionary)
+      : { countryKey: '' };
+    if (info.countryKey === selectedCountryKey) out[id] = records[id];
+  }
+  return out;
+}
+
+function populateHeatmapFilterCountry(records, dictionary) {
+  const el = getElement(DOM_IDS.heatmapFilterCountry);
+  if (!el) return;
+  const countries = typeof buildCountryCounts === 'function'
+    ? buildCountryCounts(records || {}, dictionary || {})
+    : [];
+  el.innerHTML = '<option value="">All countries</option>';
+  for (const item of countries) {
+    const flag = typeof countryCodeToFlag === 'function' ? countryCodeToFlag(item.countryCode) : '🌍';
+    el.appendChild(new Option(`${flag} ${item.country} (${item.count})`, item.key));
+  }
+  el.value = '';
+}
+
 function populateHeatmapFilterYear(records) {
   const el = getElement(DOM_IDS.heatmapFilterYear);
   if (!el) return;
@@ -304,11 +332,14 @@ function bindHeatMapModal() {
   const typeEl = getElement(DOM_IDS.heatmapFilterType);
   const yearEl = getElement(DOM_IDS.heatmapFilterYear);
   const monthEl = getElement(DOM_IDS.heatmapFilterMonth);
+  const countryEl = getElement(DOM_IDS.heatmapFilterCountry);
 
   if (!btn || !modal || !closeBtn || modal.dataset.bound === '1') return;
 
   const cache = new Map();
+  const dictionaryCache = new Map();
   let currentPayload = null;
+  let currentDictionary = {};
 
   const closeModal = () => {
     modal.hidden = true;
@@ -324,7 +355,9 @@ function bindHeatMapModal() {
     if (!type) return;
     const year = yearEl ? yearEl.value : '';
     const month = monthEl ? monthEl.value : '';
-    const filtered = filterRecordsByTime(currentPayload.records, year, month);
+    const country = countryEl ? countryEl.value : '';
+    let filtered = filterRecordsByTime(currentPayload.records, year, month);
+    if (country) filtered = filterRecordsByCountry(filtered, currentDictionary, country);
     renderWaterTestsHeatmap(filtered, type);
   };
 
@@ -332,6 +365,7 @@ function bindHeatMapModal() {
     const type = String(typeEl?.value || '').trim();
     if (!type) {
       currentPayload = null;
+      currentDictionary = {};
       clearWaterTestsMarkers();
       const emptyEl = getElement(DOM_IDS.waterTestsMapEmpty);
       if (emptyEl) {
@@ -349,10 +383,28 @@ function bindHeatMapModal() {
       populateHeatmapFilterYear(payload.records);
       if (yearEl) yearEl.value = '';
       if (monthEl) monthEl.value = '';
+      if (countryEl) countryEl.value = '';
+
+      let dict = typeof loadLocationDictionary === 'function'
+        ? loadLocationDictionary(HEATMAP_DICTIONARY_STORAGE_KEY)
+        : {};
+      populateHeatmapFilterCountry(payload.records, dict);
+      currentDictionary = dict;
       applyFiltersAndRender();
+
+      if (typeof getOrBuildLocationDictionary === 'function' && payload.records && Object.keys(payload.records).length > 0) {
+        void getOrBuildLocationDictionary(payload.records, {
+          storageKey: HEATMAP_DICTIONARY_STORAGE_KEY
+        }).then((nextDict) => {
+          currentDictionary = nextDict;
+          populateHeatmapFilterCountry(payload.records, nextDict);
+          applyFiltersAndRender();
+        });
+      }
       setTimeout(invalidateWaterTestsMapSize, 150);
     } catch (err) {
       currentPayload = null;
+      currentDictionary = {};
       clearWaterTestsMarkers();
     }
   };
@@ -377,6 +429,7 @@ function bindHeatMapModal() {
   typeEl.addEventListener('change', () => { void loadAndRender(); });
   if (yearEl) yearEl.addEventListener('change', applyFiltersAndRender);
   if (monthEl) monthEl.addEventListener('change', applyFiltersAndRender);
+  if (countryEl) countryEl.addEventListener('change', applyFiltersAndRender);
 
   modal.dataset.bound = '1';
 }

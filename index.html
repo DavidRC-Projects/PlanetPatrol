@@ -49,26 +49,18 @@
           </div>
         </section>
         <section class="card water-tests-box">
-          <div class="water-tests-filters">
-            <label class="filter-field">
-              <span class="filter-label">Water testing</span>
-              <select id="filterWaterTestType">
-                <option value="">Select test…</option>
-                <option value="coliforms">Coliforms</option>
-                <option value="nitrate">Nitrate</option>
-                <option value="nitrite">Nitrite</option>
-                <option value="ph">pH</option>
-                <option value="phosphate">Phosphate</option>
-                <option value="temperature">Temperature</option>
-              </select>
-            </label>
-            <label class="filter-field">
-              <span class="filter-label">Country (water tests)</span>
-              <select id="filterWaterTestCountry">
-                <option value="">All countries</option>
-              </select>
-            </label>
-          </div>
+          <label class="filter-field">
+            <span class="filter-label">Water testing</span>
+            <select id="filterWaterTestType">
+              <option value="">Select test…</option>
+              <option value="coliforms">Coliforms</option>
+              <option value="nitrate">Nitrate</option>
+              <option value="nitrite">Nitrite</option>
+              <option value="ph">pH</option>
+              <option value="phosphate">Phosphate</option>
+              <option value="temperature">Temperature</option>
+            </select>
+          </label>
         </section>
         <section class="card heat-map-box">
           <button id="waterTestsHeatmapBtn" type="button" class="heat-map-card-btn">
@@ -206,6 +198,12 @@
             <option value="10">Oct</option>
             <option value="11">Nov</option>
             <option value="12">Dec</option>
+          </select>
+        </label>
+        <label class="filter-field">
+          <span class="filter-label">Country</span>
+          <select id="heatmapFilterCountry">
+            <option value="">All countries</option>
           </select>
         </label>
       </div>

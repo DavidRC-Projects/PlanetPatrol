@@ -57,7 +57,7 @@ const DOM_IDS = {
   topBrandsList: 'topBrandsList',
   topLabelsList: 'topLabelsList',
   filterWaterTestType: 'filterWaterTestType',
-  filterWaterTestCountry: 'filterWaterTestCountry',
+  heatmapFilterCountry: 'heatmapFilterCountry',
   waterTestsModal: 'waterTestsModal',
   waterTestsModalClose: 'waterTestsModalClose',
   waterTestsStatus: 'waterTestsStatus',

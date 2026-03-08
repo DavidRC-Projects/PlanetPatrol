@@ -1,6 +1,6 @@
 /** Location helpers. */
 
-const LOCATION_DICT_STORAGE_KEY = 'planetpatrol.locationDictionary.v2';
+const LOCATION_DICT_STORAGE_KEY = 'planetpatrol.locationDictionary.v3';
 const LOCATION_REQUEST_DELAY_MS = 80;
 const LOCATION_REQUEST_TIMEOUT_MS = 6000;
 const UNKNOWN_LOCATION_LABEL = 'Unknown location';
@@ -478,6 +478,22 @@ async function fetchCountryFromResolutionData(lat, lon) {
   }
 
   return { label: UNKNOWN_LOCATION_LABEL, country: UNKNOWN_COUNTRY_LABEL, countryCode: '', constituency: '' };
+}
+
+/**
+ * Builds a location dictionary using only resolution data (no network calls).
+ * Fast bootstrap to populate the country dropdown immediately.
+ */
+async function buildDictionaryFromResolutionDataOnly(photos) {
+  const dictionary = {};
+  const coords = getUniqueCoordinates(photos || {});
+  if (!coords.length) return dictionary;
+  await getResolutionLookup();
+  for (const c of coords) {
+    const result = await fetchCountryFromResolutionData(c.lat, c.lon);
+    dictionary[c.key] = normalizeLocationEntry(result);
+  }
+  return dictionary;
 }
 
 async function fetchJsonWithTimeout(url) {

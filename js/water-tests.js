@@ -108,40 +108,6 @@ function hasLocationData(records) {
   return false;
 }
 
-function filterWaterTestRecordsByCountry(records, dictionary, selectedCountryKey) {
-  if (!records || !selectedCountryKey) return records || {};
-  const out = {};
-  for (const id of Object.keys(records)) {
-    const info = typeof getCountryInfoForPhoto === 'function'
-      ? getCountryInfoForPhoto(records[id], dictionary)
-      : { countryKey: '' };
-    if (info.countryKey === selectedCountryKey) out[id] = records[id];
-  }
-  return out;
-}
-
-function updateWaterTestsCountryFilter(records, dictionary) {
-  const el = getElement(DOM_IDS.filterWaterTestCountry);
-  if (!el) return;
-  const countries = typeof buildCountryCounts === 'function'
-    ? buildCountryCounts(records || {}, dictionary || {})
-    : [];
-  el.innerHTML = '<option value="">All countries</option>';
-  for (const item of countries) {
-    const flag = typeof countryCodeToFlag === 'function' ? countryCodeToFlag(item.countryCode) : '🌍';
-    el.appendChild(new Option(`${flag} ${item.country} (${item.count})`, item.key));
-  }
-}
-
-function renderWaterTestsTableWithCountryFilter(type, records, dictionary) {
-  const countryEl = getElement(DOM_IDS.filterWaterTestCountry);
-  const selectedCountry = countryEl ? countryEl.value : '';
-  const filtered = selectedCountry
-    ? filterWaterTestRecordsByCountry(records, dictionary, selectedCountry)
-    : (records || {});
-  renderWaterTestsTable(type, filtered, dictionary);
-}
-
 function getSortedRecordIdsByNewest(records) {
   records = records || {};
   return Object.keys(records).sort((a, b) => {
@@ -314,8 +280,6 @@ function bindWaterTestFilters() {
   const modal = getElement(DOM_IDS.waterTestsModal);
   const closeBtn = getElement(DOM_IDS.waterTestsModalClose);
 
-  const countryFilterEl = getElement(DOM_IDS.filterWaterTestCountry);
-
   const closeModal = () => {
     if (!modal) return;
     modal.hidden = true;
@@ -324,7 +288,6 @@ function bindWaterTestFilters() {
     document.body.classList.remove('modal-open');
 
     select.value = '';
-    if (countryFilterEl) countryFilterEl.value = '';
     setWaterTestsStatus('Select a water test to load results.');
     renderWaterTestsTable('', {});
   };
@@ -350,7 +313,6 @@ function bindWaterTestFilters() {
 
   let lastRequestId = 0;
   const cache = new Map();
-  let currentWaterTestState = { type: '', records: {}, dictionary: {} };
 
   const run = async () => {
     const type = String(select.value || '').trim();
@@ -358,7 +320,6 @@ function bindWaterTestFilters() {
       closeModal();
       return;
     }
-    if (countryFilterEl) countryFilterEl.value = '';
 
     openModal();
     const label = getWaterTestLabel(type);
@@ -372,23 +333,19 @@ function bindWaterTestFilters() {
       if (requestId !== lastRequestId) return;
 
       const count = Object.keys(payload.records || {}).length;
-      const dictionary = getWaterTestsLocationDictionary();
-      currentWaterTestState = { type, records: payload.records, dictionary };
+      let dictionary = getWaterTestsLocationDictionary();
       setWaterTestsStatus(`Showing ${count.toLocaleString()} ${label} results (up to 500).`);
-      updateWaterTestsCountryFilter(payload.records, dictionary);
-      renderWaterTestsTableWithCountryFilter(type, payload.records, dictionary);
+      renderWaterTestsTable(type, payload.records, dictionary);
 
-      if (typeof getOrBuildLocationDictionary === 'function' && hasLocationData(payload.records)) {
+      if (type === 'coliforms' && typeof getOrBuildLocationDictionary === 'function' && hasLocationData(payload.records)) {
         setWaterTestsStatus(`Showing ${count.toLocaleString()} ${label} results (up to 500). Resolving locations…`);
         void getOrBuildLocationDictionary(payload.records, {
           storageKey: WATER_TESTS_DICTIONARY_STORAGE_KEY
         })
           .then((nextDictionary) => {
             if (requestId !== lastRequestId) return;
-            currentWaterTestState = { type, records: payload.records, dictionary: nextDictionary };
             setWaterTestsStatus(`Showing ${count.toLocaleString()} ${label} results (up to 500).`);
-            updateWaterTestsCountryFilter(payload.records, nextDictionary);
-            renderWaterTestsTableWithCountryFilter(type, payload.records, nextDictionary);
+            renderWaterTestsTable(type, payload.records, nextDictionary);
           })
           .catch(() => {
             if (requestId !== lastRequestId) return;
@@ -403,13 +360,6 @@ function bindWaterTestFilters() {
   };
 
   select.addEventListener('change', () => { void run(); });
-  if (countryFilterEl && countryFilterEl.dataset.bound !== '1') {
-    countryFilterEl.addEventListener('change', () => {
-      const { type, records, dictionary } = currentWaterTestState;
-      if (type && records) renderWaterTestsTableWithCountryFilter(type, records, dictionary);
-    });
-    countryFilterEl.dataset.bound = '1';
-  }
   select.dataset.bound = '1';
 
   void run();

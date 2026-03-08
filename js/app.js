@@ -54,11 +54,23 @@ function bindFilterAutoRefresh() {
   }
 }
 
-function warmLocationDictionary(photos) {
+async function warmLocationDictionary(photos) {
   try {
     appState.locationDictionary = loadLocationDictionary();
   } catch (_) {
     appState.locationDictionary = {};
+  }
+  const dict = appState.locationDictionary || {};
+  const keyCount = Object.keys(dict).length;
+  if (keyCount === 0 && photos && Object.keys(photos).length > 0) {
+    const bootstrap = await buildDictionaryFromResolutionDataOnly(photos);
+    if (Object.keys(bootstrap).length > 0) {
+      appState.locationDictionary = bootstrap;
+    }
+    void getOrBuildLocationDictionary(photos).then((next) => {
+      appState.locationDictionary = next;
+      void applyFilters(appState.photos, appState.locationDictionary, appState.missions);
+    });
   }
 }
 
@@ -76,7 +88,7 @@ async function init() {
     ]);
     appState.photos = photoPayload.photos;
     appState.missions = missionPayload.missions || {};
-    warmLocationDictionary(appState.photos);
+    await warmLocationDictionary(appState.photos);
     showDashboard();
     populateYearOptions(appState.photos);
     bindFilterAutoRefresh();
