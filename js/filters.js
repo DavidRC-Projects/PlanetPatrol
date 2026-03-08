@@ -151,14 +151,23 @@ function updateCountryHeader(selectedCountry, countries) {
   nameEl.textContent = selected.country;
 }
 
-function populateCountryOptions(photos, dictionary, selectedCountry = '') {
+async function populateCountryOptions(photos, dictionary, selectedCountry = '') {
   const el = getElement(DOM_IDS.filterCountry);
   if (!el) return '';
-  const countries = buildCountryCounts(photos, dictionary);
+  let countries = [];
+  if (typeof buildCountryCountsFromResolutionData === 'function') {
+    try {
+      countries = await buildCountryCountsFromResolutionData();
+    } catch (_) {
+      countries = buildCountryCounts(photos, dictionary);
+    }
+  } else {
+    countries = buildCountryCounts(photos, dictionary);
+  }
   el.innerHTML = '<option value="">All countries</option>';
   for (const item of countries) {
     const flag = countryCodeToFlag(item.countryCode);
-    el.appendChild(new Option(`${flag} ${item.country} (${item.count})`, item.key));
+    el.appendChild(new Option(`${flag} ${item.country} (${formatCount(item.count)})`, item.key));
   }
   const stillValid = countries.some((item) => item.key === selectedCountry);
   el.value = stillValid ? selectedCountry : '';
@@ -166,7 +175,7 @@ function populateCountryOptions(photos, dictionary, selectedCountry = '') {
   return el.value;
 }
 
-function populateConstituencyOptions(photos, dictionary, selectedCountry = '', selectedConstituency = '') {
+async function populateConstituencyOptions(photos, dictionary, selectedCountry = '', selectedConstituency = '') {
   const el = getElement(DOM_IDS.filterConstituency);
   const labelEl = getElement(DOM_IDS.filterConstituencyLabel);
   if (!el) return '';
@@ -177,10 +186,19 @@ function populateConstituencyOptions(photos, dictionary, selectedCountry = '', s
     return '';
   }
   if (labelEl) labelEl.textContent = 'County / location';
-  const constituencies = buildConstituencyCounts(photos, dictionary, selectedCountry);
+  let constituencies = [];
+  if (typeof buildConstituencyCountsFromResolutionData === 'function') {
+    try {
+      constituencies = await buildConstituencyCountsFromResolutionData(selectedCountry);
+    } catch (_) {
+      constituencies = buildConstituencyCounts(photos, dictionary, selectedCountry);
+    }
+  } else {
+    constituencies = buildConstituencyCounts(photos, dictionary, selectedCountry);
+  }
   el.innerHTML = '<option value="">All counties / locations</option>';
   for (const item of constituencies) {
-    el.appendChild(new Option(`${item.constituency} (${item.count})`, item.key));
+    el.appendChild(new Option(`${item.constituency} (${formatCount(item.count)})`, item.key));
   }
   const stillValid = constituencies.some((item) => item.key === selectedConstituency);
   el.value = stillValid ? selectedConstituency : '';
@@ -212,9 +230,9 @@ async function applyFilters(photos, locationDictionary, missions) {
   if (!values) return;
   applyMissionCountryExclusivity(values);
   values.mission = populateMissionOptions(photos, missions, values.mission);
-  values.country = populateCountryOptions(photos, locationDictionary, values.country);
+  values.country = await populateCountryOptions(photos, locationDictionary, values.country);
   maybeEnrichConstituenciesForCountry(photos, locationDictionary, values.country);
-  values.constituency = populateConstituencyOptions(
+  values.constituency = await populateConstituencyOptions(
     photos,
     locationDictionary,
     values.country,

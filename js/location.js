@@ -90,6 +90,7 @@ const COUNTRY_NAME_LOCALE_HINTS = [
 ];
 
 let resolutionLookupPromise = null;
+let resolutionPayloadPromise = null;
 const countryCodeLookupCache = new WeakMap();
 let countryNameToCodeLookupCache = null;
 let countryNameToEnglishLookupCache = null;
@@ -446,6 +447,68 @@ async function getResolutionLookup() {
       .catch(() => ({ byKey: new Map(), points: [] }));
   }
   return resolutionLookupPromise;
+}
+
+/** Fetches raw resolution payload for building country/constituency dropdowns. */
+async function getResolutionPayload() {
+  if (!resolutionPayloadPromise) {
+    resolutionPayloadPromise = fetchJsonWithTimeout(RESOLUTION_DATA_URL);
+  }
+  return resolutionPayloadPromise;
+}
+
+/** Builds country counts from location-resolutions.json (shows every country in the export). */
+async function buildCountryCountsFromResolutionData() {
+  const payload = await getResolutionPayload();
+  const rows = Array.isArray(payload?.locations) ? payload.locations : [];
+  const groups = new Map();
+  for (const row of rows) {
+    const country = normalizeCountryName(row?.country);
+    if (country === UNKNOWN_COUNTRY_LABEL) continue;
+    const countryCode = getCountryCodeFromName(country);
+    const groupKey = getCountryGroupKey(country, countryCode);
+    const count = Number(row?.count) || 1;
+    const current = groups.get(groupKey) || {
+      key: groupKey,
+      country,
+      countryCode: countryCode || '',
+      count: 0
+    };
+    current.count += count;
+    if (!current.countryCode && countryCode) current.countryCode = countryCode;
+    groups.set(groupKey, current);
+  }
+  return [...groups.values()]
+    .sort((a, b) => b.count - a.count || a.country.localeCompare(b.country));
+}
+
+/** Builds constituency counts from location-resolutions.json for a selected country. */
+async function buildConstituencyCountsFromResolutionData(selectedCountry = '') {
+  if (!selectedCountry) return [];
+  const payload = await getResolutionPayload();
+  const rows = Array.isArray(payload?.locations) ? payload.locations : [];
+  const groups = new Map();
+  for (const row of rows) {
+    const country = normalizeCountryName(row?.country);
+    if (country === UNKNOWN_COUNTRY_LABEL) continue;
+    const countryCode = getCountryCodeFromName(country);
+    if (getCountryGroupKey(country, countryCode) !== selectedCountry) continue;
+    const constituency = normalizeConstituencyName(row?.detail);
+    const count = Number(row?.count) || 1;
+    if (constituency) {
+      const key = `${selectedCountry}::${constituency.toLowerCase()}`;
+      const current = groups.get(key) || { key, constituency, count: 0 };
+      current.count += count;
+      groups.set(key, current);
+    } else {
+      const key = `${selectedCountry}${UNSPECIFIED_LOCATION_KEY_SUFFIX}`;
+      const current = groups.get(key) || { key, constituency: 'Not specified', count: 0 };
+      current.count += count;
+      groups.set(key, current);
+    }
+  }
+  return [...groups.values()]
+    .sort((a, b) => b.count - a.count || (a.constituency || '').localeCompare(b.constituency || ''));
 }
 
 async function fetchCountryFromResolutionData(lat, lon) {
