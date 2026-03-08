@@ -71,25 +71,50 @@ body {
   min-width: 280px;
 }
 
-.heat-map-box .filter-label {
-  display: block;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  color: var(--text-muted, #666);
-}
-
-.heat-map-box button {
-  padding: 0.4rem 1rem;
-  background: #0f766e;
-  color: #f0fdf4;
-  border: none;
-  border-radius: 4px;
+.heat-map-card-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 120px;
+  padding: 1rem;
+  background: linear-gradient(145deg, rgba(15, 118, 110, 0.08) 0%, rgba(14, 165, 233, 0.06) 100%);
+  border: 2px solid rgba(15, 118, 110, 0.2);
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 0.9rem;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 }
 
-.heat-map-box button:hover {
-  background: #0d5c55;
+.heat-map-card-btn:hover {
+  background: linear-gradient(145deg, rgba(15, 118, 110, 0.14) 0%, rgba(14, 165, 233, 0.1) 100%);
+  border-color: rgba(15, 118, 110, 0.4);
+  transform: translateY(-2px);
+}
+
+.heat-map-card-btn:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+.heat-map-globe {
+  display: block;
+  font-size: 2.5rem;
+  line-height: 1;
+  animation: heat-map-globe-spin 8s linear infinite;
+}
+
+@keyframes heat-map-globe-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.heat-map-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f766e;
+  text-align: center;
 }
 
 .pie-chart-box {
@@ -99,31 +124,43 @@ body {
   min-width: 280px;
 }
 
-.pie-chart-box .filter-label {
-  display: block;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
+.pie-chart-heading {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
   color: var(--text-muted, #666);
 }
 
 .pie-chart-box .pie-chart-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
-.pie-chart-box .pie-chart-buttons button {
-  padding: 0.4rem 1rem;
-  background: #0f766e;
-  color: #f0fdf4;
-  border: none;
-  border-radius: 4px;
+.pie-chart-card-btn {
+  flex: 1;
+  min-width: 120px;
+  min-height: 80px;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(145deg, rgba(15, 118, 110, 0.08) 0%, rgba(14, 165, 233, 0.06) 100%);
+  border: 2px solid rgba(15, 118, 110, 0.2);
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f766e;
   cursor: pointer;
-  font-size: 0.9rem;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 }
 
-.pie-chart-box .pie-chart-buttons button:hover {
-  background: #0d5c55;
+.pie-chart-card-btn:hover {
+  background: linear-gradient(145deg, rgba(15, 118, 110, 0.14) 0%, rgba(14, 165, 233, 0.1) 100%);
+  border-color: rgba(15, 118, 110, 0.4);
+  transform: translateY(-2px);
+}
+
+.pie-chart-card-btn:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
 }
 
 .country-current {
@@ -356,8 +393,8 @@ body {
 }
 
 .pie-chart-tooltip {
-  position: absolute;
-  z-index: 10;
+  position: fixed;
+  z-index: 9999;
   pointer-events: none;
   max-width: min(260px, 80vw);
   padding: 0.45rem 0.55rem;
@@ -368,6 +405,32 @@ body {
   font-size: 0.85rem;
   color: #1f2a27;
   backdrop-filter: blur(6px);
+}
+
+.pie-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+  padding: 0.75rem 0.5rem;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.pie-chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #1f2a27;
+}
+
+.pie-chart-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
 .panel-grid {

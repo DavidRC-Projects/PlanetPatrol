@@ -63,14 +63,16 @@
           </label>
         </section>
         <section class="card heat-map-box">
-          <span class="filter-label">Heat maps</span>
-          <button id="waterTestsHeatmapBtn" type="button">Water tests heat map</button>
+          <button id="waterTestsHeatmapBtn" type="button" class="heat-map-card-btn">
+            <span class="heat-map-globe" aria-hidden="true">🌍</span>
+            <span class="heat-map-label">Water tests map</span>
+          </button>
         </section>
         <section class="card pie-chart-box">
-          <span class="filter-label">Charts</span>
+          <h3 class="pie-chart-heading">Pie charts</h3>
           <div class="pie-chart-buttons">
-            <button id="pieChartBrandsBtn" type="button">Brand pie chart</button>
-            <button id="pieChartLabelsBtn" type="button">Label pie chart</button>
+            <button id="pieChartBrandsBtn" type="button" class="pie-chart-card-btn">Brands</button>
+            <button id="pieChartLabelsBtn" type="button" class="pie-chart-card-btn">Labels</button>
           </div>
         </section>
       </div>
@@ -227,8 +229,8 @@
       <h2 id="pieChartModalTitle">Brands distribution</h2>
       <div class="chart-wrap pie-chart-wrap">
         <svg id="pieChartSvg" class="pie-chart-svg" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Pie chart"></svg>
-        <div id="pieChartTooltip" class="pie-chart-tooltip hidden" hidden></div>
       </div>
+      <div id="pieChartLegend" class="pie-chart-legend" aria-label="Chart legend"></div>
       <p id="pieChartEmpty" class="muted hidden" hidden>No data for current filters.</p>
     </div>
   </div>
@@ -250,6 +252,7 @@
     </div>
   </div>
 
+  <div id="pieChartTooltip" class="pie-chart-tooltip hidden" hidden aria-live="polite"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="js/config.js"></script>
   <script src="js/dom.js"></script>

@@ -32,6 +32,7 @@ const DOM_IDS = {
   pieChartSvg: 'pieChartSvg',
   pieChartEmpty: 'pieChartEmpty',
   pieChartTooltip: 'pieChartTooltip',
+  pieChartLegend: 'pieChartLegend',
   countryFlag: 'countryFlag',
   countryName: 'countryName',
   timeSeriesSubtitle: 'timeSeriesSubtitle',

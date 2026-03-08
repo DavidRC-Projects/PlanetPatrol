@@ -105,19 +105,49 @@ function renderPieChart(svgElement, items, options = {}) {
   return true;
 }
 
-function showPieTooltip(tooltipEl, text, x, y) {
+function showPieTooltip(tooltipEl, text, clientX, clientY) {
   if (!tooltipEl) return;
   tooltipEl.textContent = text;
-  tooltipEl.style.left = `${x}px`;
-  tooltipEl.style.top = `${y}px`;
   tooltipEl.hidden = false;
   tooltipEl.classList.remove('hidden');
+  const offset = 14;
+  const rect = tooltipEl.getBoundingClientRect();
+  const pad = 8;
+  let left = clientX + offset;
+  let top = clientY - 10;
+  if (left + rect.width > window.innerWidth - pad) left = clientX - rect.width - offset;
+  if (left < pad) left = pad;
+  if (top < pad) top = pad;
+  if (top + rect.height > window.innerHeight - pad) top = clientY - rect.height - offset;
+  tooltipEl.style.left = `${left}px`;
+  tooltipEl.style.top = `${top}px`;
 }
 
 function hidePieTooltip(tooltipEl) {
   if (!tooltipEl) return;
   tooltipEl.hidden = true;
   tooltipEl.classList.add('hidden');
+}
+
+function renderPieChartLegend(legendEl, slices) {
+  if (!legendEl) return;
+  if (!slices || !slices.length) {
+    legendEl.innerHTML = '';
+    return;
+  }
+  const html = slices
+    .map(
+      (s) =>
+        `<span class="pie-chart-legend-item"><span class="pie-chart-legend-swatch" style="background:${s.color}"></span><span>${escapeHtml(s.name)}: ${formatPieCount(s.count)}</span></span>`
+    )
+    .join('');
+  legendEl.innerHTML = html;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 function ensurePieChartInteractivity(svg, tooltipEl) {
@@ -177,9 +207,7 @@ function ensurePieChartInteractivity(svg, tooltipEl) {
       const s = state.slices[hoveredIndex];
       const pct = ((s.ratio * 100) | 0) + (s.ratio * 100 % 1 >= 0.5 ? 1 : 0);
       const text = `${s.name}: ${formatPieCount(s.count)} (${pct}%)`;
-      const tipX = Math.min(Math.max(x + 12, 8), rect.width - 180);
-      const tipY = Math.min(Math.max(y - 20, 8), rect.height - 40);
-      showPieTooltip(tooltipEl, text, tipX, tipY);
+      showPieTooltip(tooltipEl, text, event.clientX, event.clientY);
     } else {
       hidePieTooltip(tooltipEl);
     }
@@ -193,6 +221,7 @@ function openPieChartModal(type) {
   const svgEl = getElement(DOM_IDS.pieChartSvg);
   const emptyEl = getElement(DOM_IDS.pieChartEmpty);
   const tooltipEl = getElement(DOM_IDS.pieChartTooltip);
+  const legendEl = getElement(DOM_IDS.pieChartLegend);
 
   if (!modal || !titleEl || !svgEl || !emptyEl) return;
 
@@ -219,12 +248,15 @@ function openPieChartModal(type) {
     emptyEl.classList.add('hidden');
     svgEl.hidden = false;
     svgEl.classList.remove('hidden');
+    renderPieChartLegend(legendEl, svgEl._pieState?.slices);
+    legendEl.hidden = false;
     ensurePieChartInteractivity(svgEl, tooltipEl);
   } else {
     emptyEl.hidden = false;
     emptyEl.classList.remove('hidden');
     svgEl.hidden = true;
     svgEl.classList.add('hidden');
+    if (legendEl) legendEl.hidden = true;
   }
 
   modal.hidden = false;
