@@ -137,6 +137,21 @@ async function fetchFirestoreWaterTests(type, limit) {
   return { type: safeType, records, limit: n };
 }
 
+function filterWaterTestRecordsByTime(records, from, to) {
+  const fromMs = Number(from);
+  const toMs = Number(to);
+  if (!Number.isFinite(fromMs) && !Number.isFinite(toMs)) return records;
+  const filtered = {};
+  for (const [id, rec] of Object.entries(records)) {
+    const dt = Number(rec?.dateTime);
+    if (!Number.isFinite(dt)) continue;
+    if (Number.isFinite(fromMs) && dt < fromMs) continue;
+    if (Number.isFinite(toMs) && dt > toMs) continue;
+    filtered[id] = rec;
+  }
+  return filtered;
+}
+
 async function getPhotosWithCache() {
   const now = Date.now();
   if (photosCache.payload && photosCache.expiresAt > now) {
@@ -371,10 +386,17 @@ const server = http.createServer(async (req, res) => {
       const url = new URL(req.url, `http://${HOST}:${PORT}`);
       const type = url.searchParams.get('type') || '';
       const limit = url.searchParams.get('limit') || '';
+      const from = url.searchParams.get('from') || '';
+      const to = url.searchParams.get('to') || '';
       const payload = await getWaterTestsWithCache(type, limit);
       if (payload?.error) {
         sendJson(res, 400, payload);
         return;
+      }
+      const fromMs = from ? Number(from) : NaN;
+      const toMs = to ? Number(to) : NaN;
+      if (Number.isFinite(fromMs) || Number.isFinite(toMs)) {
+        payload.records = filterWaterTestRecordsByTime(payload.records || {}, fromMs, toMs);
       }
       sendJson(res, 200, payload);
     } catch (error) {

@@ -59,5 +59,14 @@ const DOM_IDS = {
   waterTestsModal: 'waterTestsModal',
   waterTestsModalClose: 'waterTestsModalClose',
   waterTestsStatus: 'waterTestsStatus',
-  waterTestsTable: 'waterTestsTable'
+  waterTestsTable: 'waterTestsTable',
+  waterTestsMap: 'waterTestsMap',
+  waterTestsMapEmpty: 'waterTestsMapEmpty',
+  waterTestsHeatmapBtn: 'waterTestsHeatmapBtn',
+  waterTestsHeatmapModal: 'waterTestsHeatmapModal',
+  waterTestsHeatmapModalClose: 'waterTestsHeatmapModalClose',
+  waterTestsHeatmapModalTitle: 'waterTestsHeatmapModalTitle',
+  heatmapFilterType: 'heatmapFilterType',
+  heatmapFilterYear: 'heatmapFilterYear',
+  heatmapFilterMonth: 'heatmapFilterMonth'
 };

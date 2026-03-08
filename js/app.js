@@ -66,8 +66,8 @@ async function init() {
   const required = [DOM_IDS.loading, DOM_IDS.dashboard, DOM_IDS.error];
   if (!hasRequiredElements(required)) return;
 
-  // Water testing queries do not depend on the photo dataset, so bind immediately.
   bindWaterTestFilters();
+  bindHeatMapModal();
 
   try {
     const [photoPayload, missionPayload] = await Promise.all([

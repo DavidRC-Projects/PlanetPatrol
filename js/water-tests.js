@@ -276,7 +276,6 @@ function bindWaterTestFilters() {
     modal.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open');
 
-    // Reset filter + UI when closing.
     select.value = '';
     setWaterTestsStatus('Select a water test to load results.');
     renderWaterTestsTable('', {});
@@ -302,7 +301,7 @@ function bindWaterTestFilters() {
   }
 
   let lastRequestId = 0;
-  const cache = new Map(); // type -> payload
+  const cache = new Map();
 
   const run = async () => {
     const type = String(select.value || '').trim();
@@ -327,7 +326,6 @@ function bindWaterTestFilters() {
       setWaterTestsStatus(`Showing ${count.toLocaleString()} ${label} results (up to 500).`);
       renderWaterTestsTable(type, payload.records, dictionary);
 
-      // Coliforms needs country/constituency. Kick off enrichment (cached in localStorage).
       if (type === 'coliforms' && typeof getOrBuildLocationDictionary === 'function') {
         setWaterTestsStatus(`Showing ${count.toLocaleString()} ${label} results (up to 500). Resolving locations…`);
         void getOrBuildLocationDictionary(payload.records)
@@ -338,7 +336,6 @@ function bindWaterTestFilters() {
             renderWaterTestsTable(type, payload.records, nextDictionary);
           })
           .catch(() => {
-            // Keep current render even if geocoding fails.
             if (requestId !== lastRequestId) return;
             setWaterTestsStatus(`Showing ${count.toLocaleString()} ${label} results (up to 500).`);
           });
@@ -353,7 +350,6 @@ function bindWaterTestFilters() {
   select.addEventListener('change', () => { void run(); });
   select.dataset.bound = '1';
 
-  // Render initial state.
   void run();
 }
 
