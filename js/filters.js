@@ -175,7 +175,7 @@ async function populateCountryOptions(photos, dictionary, selectedCountry = '') 
   return el.value;
 }
 
-async function populateConstituencyOptions(photos, dictionary, selectedCountry = '', selectedConstituency = '') {
+function populateConstituencyOptions(photos, dictionary, selectedCountry = '', selectedConstituency = '') {
   const el = getElement(DOM_IDS.filterConstituency);
   const labelEl = getElement(DOM_IDS.filterConstituencyLabel);
   if (!el) return '';
@@ -186,16 +186,9 @@ async function populateConstituencyOptions(photos, dictionary, selectedCountry =
     return '';
   }
   if (labelEl) labelEl.textContent = 'County / location';
-  let constituencies = [];
-  if (typeof buildConstituencyCountsFromResolutionData === 'function') {
-    try {
-      constituencies = await buildConstituencyCountsFromResolutionData(selectedCountry);
-    } catch (_) {
-      constituencies = buildConstituencyCounts(photos, dictionary, selectedCountry);
-    }
-  } else {
-    constituencies = buildConstituencyCounts(photos, dictionary, selectedCountry);
-  }
+  /* Use photo+dictionary for counties: location-resolutions.json has detail:null;
+   * county data comes from the location dictionary (reverse geocoding). */
+  const constituencies = buildConstituencyCounts(photos, dictionary, selectedCountry);
   el.innerHTML = '<option value="">All counties / locations</option>';
   for (const item of constituencies) {
     el.appendChild(new Option(`${item.constituency} (${formatCount(item.count)})`, item.key));
@@ -232,7 +225,7 @@ async function applyFilters(photos, locationDictionary, missions) {
   values.mission = populateMissionOptions(photos, missions, values.mission);
   values.country = await populateCountryOptions(photos, locationDictionary, values.country);
   maybeEnrichConstituenciesForCountry(photos, locationDictionary, values.country);
-  values.constituency = await populateConstituencyOptions(
+  values.constituency = populateConstituencyOptions(
     photos,
     locationDictionary,
     values.country,
