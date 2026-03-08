@@ -28,7 +28,7 @@
       <div class="cards" id="overview">
         <div class="card"><span class="value" id="totalPieces">0</span><div class="label">Total litter collected</div></div>
         <div class="card"><span class="value" id="unmoderatedPieces">0</span><div class="label">Unpublished litter collected</div></div>
-        <div class="card"><span class="value" id="moderated">0</span><div class="label">Moderated photos</div></div>
+        <div class="card"><span class="value" id="moderated">0</span><div class="label">Published photos</div></div>
         <div class="card"><span class="value" id="unmoderated">0</span><div class="label">Unpublished photos</div></div>
         <div class="card"><span class="value" id="totalPhotos">0</span><div class="label">Total photos</div></div>
         <section class="card country-box">
@@ -61,11 +61,18 @@
             </select>
           </label>
         </section>
+        <section class="card pie-chart-box">
+          <span class="filter-label">Charts</span>
+          <div class="pie-chart-buttons">
+            <button id="pieChartBrandsBtn" type="button">Brand pie chart</button>
+            <button id="pieChartLabelsBtn" type="button">Label pie chart</button>
+          </div>
+        </section>
       </div>
 
       <section class="filters" id="filters">
         <label class="filter-field"><span class="filter-label">Mission</span><select id="filterMission"><option value="">All missions</option></select></label>
-        <label class="filter-field"><span class="filter-label">Status</span><select id="filterStatus"><option value="all">All</option><option value="moderated">Moderated</option><option value="unmoderated">Unpublished</option></select></label>
+        <label class="filter-field"><span class="filter-label">Status</span><select id="filterStatus"><option value="all">All</option><option value="moderated">Published</option><option value="unmoderated">Unpublished</option></select></label>
         <label class="filter-field"><span class="filter-label">Year</span><select id="filterYear"><option value="">All</option></select></label>
         <label class="filter-field"><span class="filter-label">Month (selected year)</span><select id="filterMonth"><option value="">All</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select></label>
         <label class="filter-field"><span class="filter-label">Day of month</span><select id="filterDay"><option value="">All</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></label>
@@ -157,6 +164,18 @@
     </div>
   </div>
 
+  <div id="pieChartModal" class="ts-modal hidden" hidden aria-hidden="true">
+    <div class="ts-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="pieChartModalTitle">
+      <button id="pieChartModalClose" class="ts-modal-close" type="button" aria-label="Close pie chart">×</button>
+      <h2 id="pieChartModalTitle">Brands distribution</h2>
+      <div class="chart-wrap pie-chart-wrap">
+        <svg id="pieChartSvg" class="pie-chart-svg" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Pie chart"></svg>
+        <div id="pieChartTooltip" class="pie-chart-tooltip hidden" hidden></div>
+      </div>
+      <p id="pieChartEmpty" class="muted hidden" hidden>No data for current filters.</p>
+    </div>
+  </div>
+
   <div id="missionPartnerModal" class="ts-modal hidden" hidden aria-hidden="true">
     <div class="ts-modal-dialog mission-partner-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="missionPartnerModalTitle">
       <button id="missionPartnerModalClose" class="ts-modal-close" type="button" aria-label="Close mission partner snapshot">×</button>
@@ -186,6 +205,7 @@
   <script src="js/missions.js"></script>
   <script src="js/render.js"></script>
   <script src="js/filters.js"></script>
+  <script src="js/pie-chart.js"></script>
   <script src="js/water-tests.js"></script>
   <script src="js/app.js"></script>
 </body>

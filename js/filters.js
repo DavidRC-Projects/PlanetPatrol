@@ -225,5 +225,6 @@ async function applyFilters(photos, locationDictionary, missions) {
     values.day,
     values.brandLabelSearch
   );
+  if (typeof appState !== 'undefined' && appState) appState.filteredPhotos = filtered;
   await renderFilteredView(filtered, values, missions, photos);
 }

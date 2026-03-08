@@ -81,6 +81,7 @@ async function init() {
     populateYearOptions(appState.photos);
     bindFilterAutoRefresh();
     bindTimeSeriesModal();
+    bindPieChartModals();
     bindMissionPartnerModal();
     void applyFilters(appState.photos, appState.locationDictionary, appState.missions);
   } catch (error) {
