@@ -9,6 +9,7 @@ const DOM_IDS = {
   loading: 'loading',
   error: 'error',
   errorMessage: 'errorMessage',
+  errorRetry: 'errorRetry',
   dashboard: 'dashboard',
   totalPieces: 'totalPieces',
   unmoderatedPieces: 'unmoderatedPieces',

@@ -74,12 +74,11 @@ async function warmLocationDictionary(photos) {
   }
 }
 
-async function init() {
+async function loadData() {
   const required = [DOM_IDS.loading, DOM_IDS.dashboard, DOM_IDS.error];
   if (!hasRequiredElements(required)) return;
 
-  bindWaterTestFilters();
-  bindHeatMapModal();
+  setViewState({ loading: 'block', dashboard: 'none', error: 'none' });
 
   try {
     const [photoPayload, missionPayload] = await Promise.all([
@@ -91,14 +90,27 @@ async function init() {
     await warmLocationDictionary(appState.photos);
     showDashboard();
     populateYearOptions(appState.photos);
-    bindFilterAutoRefresh();
-    bindTimeSeriesModal();
-    bindPieChartModals();
-    bindMissionPartnerModal();
     void applyFilters(appState.photos, appState.locationDictionary, appState.missions);
   } catch (error) {
     showError(error.message || 'We could not load data from the API. Please try again shortly.');
   }
+}
+
+function init() {
+  const required = [DOM_IDS.loading, DOM_IDS.dashboard, DOM_IDS.error];
+  if (!hasRequiredElements(required)) return;
+
+  bindWaterTestFilters();
+  bindHeatMapModal();
+  bindFilterAutoRefresh();
+  bindTimeSeriesModal();
+  bindPieChartModals();
+  bindMissionPartnerModal();
+
+  const retryEl = getElement(DOM_IDS.errorRetry);
+  if (retryEl) retryEl.addEventListener('click', () => void loadData());
+
+  void loadData();
 }
 
 init();

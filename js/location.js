@@ -684,9 +684,13 @@ function getConstituencyInfoForPhoto(photo, dictionary) {
 function buildCountryCounts(photos, dictionary) {
   photos = photos || {};
   const groups = new Map();
+  let unknownCount = 0;
   for (const id of Object.keys(photos)) {
     const info = getCountryInfoForPhoto(photos[id], dictionary);
-    if (info.country === UNKNOWN_COUNTRY_LABEL) continue;
+    if (info.country === UNKNOWN_COUNTRY_LABEL) {
+      unknownCount += 1;
+      continue;
+    }
     const groupKey = info.countryKey;
     const current = groups.get(groupKey) || {
       key: groupKey,
@@ -699,19 +703,34 @@ function buildCountryCounts(photos, dictionary) {
     if (!current.countryCode && info.countryCode) current.countryCode = info.countryCode;
     groups.set(groupKey, current);
   }
-  return [...groups.values()]
+  const result = [...groups.values()]
     .sort((a, b) => b.count - a.count || a.country.localeCompare(b.country));
+  if (unknownCount > 0) {
+    result.push({
+      key: getCountryGroupKey(UNKNOWN_COUNTRY_LABEL, ''),
+      country: UNKNOWN_COUNTRY_LABEL,
+      countryCode: '',
+      count: unknownCount
+    });
+  }
+  return result;
 }
+
+const UNSPECIFIED_LOCATION_KEY_SUFFIX = '::(not specified)';
 
 function buildConstituencyCounts(photos, dictionary, selectedCountry = '') {
   photos = photos || {};
   const groups = new Map();
+  let unspecifiedCount = 0;
   for (const id of Object.keys(photos)) {
     const photo = photos[id];
     const countryInfo = getCountryInfoForPhoto(photo, dictionary);
     if (selectedCountry && countryInfo.countryKey !== selectedCountry) continue;
     const constituencyInfo = getConstituencyInfoForPhoto(photo, dictionary);
-    if (!constituencyInfo.key) continue;
+    if (!constituencyInfo.key) {
+      unspecifiedCount += 1;
+      continue;
+    }
     const current = groups.get(constituencyInfo.key) || {
       key: constituencyInfo.key,
       constituency: constituencyInfo.constituency,
@@ -720,8 +739,16 @@ function buildConstituencyCounts(photos, dictionary, selectedCountry = '') {
     current.count += 1;
     groups.set(constituencyInfo.key, current);
   }
-  return [...groups.values()]
+  const result = [...groups.values()]
     .sort((a, b) => b.count - a.count || a.constituency.localeCompare(b.constituency));
+  if (unspecifiedCount > 0 && selectedCountry) {
+    result.push({
+      key: `${selectedCountry}${UNSPECIFIED_LOCATION_KEY_SUFFIX}`,
+      constituency: 'Not specified',
+      count: unspecifiedCount
+    });
+  }
+  return result;
 }
 
 function hasMissingConstituencyForCountry(photos, dictionary, selectedCountry = '') {

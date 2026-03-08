@@ -8,7 +8,13 @@ function filterPhotos(photos, locationDictionary, missions, country, constituenc
     const countryInfo = getCountryInfoForPhoto(photo, locationDictionary);
     const constituencyInfo = getConstituencyInfoForPhoto(photo, locationDictionary);
     if (country && countryInfo.countryKey !== country) continue;
-    if (constituency && constituencyInfo.key !== constituency) continue;
+    if (constituency) {
+      if (typeof UNSPECIFIED_LOCATION_KEY_SUFFIX === 'string' && constituency.endsWith(UNSPECIFIED_LOCATION_KEY_SUFFIX)) {
+        if (constituencyInfo.key) continue;
+      } else if (constituencyInfo.key !== constituency) {
+        continue;
+      }
+    }
     if (!photoMatchesMissionKey(photo, mission, missions)) continue;
     if (!passesStatusFilter(photo, status)) continue;
     if (!passesDateFilter(photo, year, month, day)) continue;
