@@ -6,7 +6,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "extract:locations": "node scripts/extract-location-resolutions.js"
+    "extract:locations": "node scripts/extract-location-resolutions.js",
+    "test": "node --test"
   },
   "dependencies": {
     "firebase-admin": "^13.6.1"

@@ -54,8 +54,10 @@ function maybeEnrichConstituenciesForCountry(photos, dictionary, selectedCountry
   lastCountryConstituencyEnrichmentKey = selectedCountryKey;
   void getOrBuildLocationDictionary(getPhotosForCountry(photos, dictionary, selectedCountryKey))
     .then((nextDictionary) => {
-      if (typeof appState !== 'undefined' && appState) appState.locationDictionary = nextDictionary;
-      void applyFilters(photos, nextDictionary, (typeof appState !== 'undefined' && appState) ? appState.missions : {});
+      if (typeof appState !== 'undefined' && appState) {
+        appState.locationDictionary = { ...appState.locationDictionary, ...nextDictionary };
+      }
+      void applyFilters(photos, appState?.locationDictionary || nextDictionary, (typeof appState !== 'undefined' && appState) ? appState.missions : {});
     })
     .catch(() => {
       // Allow retries if enrichment fails.

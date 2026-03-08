@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Country Filter Manual Test</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <main class="page-shell" style="padding: 1rem;">
+    <h1>Country Filter Manual Test</h1>
+    <p class="muted">This page uses mock data to test the country filter without Firebase. Open the browser console for test results.</p>
+
+    <section class="card country-box" style="margin: 1rem 0;">
+      <div class="country-filters">
+        <label class="filter-field">
+          <span class="filter-label">Country</span>
+          <select id="filterCountry">
+            <option value="">All countries</option>
+          </select>
+        </label>
+        <label class="filter-field">
+          <span class="filter-label">County / location</span>
+          <select id="filterConstituency">
+            <option value="">Select a country first</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section style="margin: 1rem 0;">
+      <p><strong>Expected:</strong> Country dropdown should show United Kingdom, France, and United States (with counts).</p>
+      <p><strong>Test:</strong> Select "France" — the count below should show 1 photo.</p>
+      <p id="filteredCount">Filtered photos: -</p>
+    </section>
+  </main>
+
+  <script>
+    // Mock data: photos from 3 countries (UK, France, US)
+    const MOCK_PHOTOS = {
+      p1: { location: { latitude: 51.46, longitude: -0.31 }, pieces: 5, moderated: true, updated: '2024-01-15' },
+      p2: { location: { latitude: 51.52, longitude: -0.02 }, pieces: 3, moderated: true, updated: '2024-02-20' },
+      p3: { location: { latitude: 48.86, longitude: 2.35 }, pieces: 2, moderated: true, updated: '2024-03-10' },
+      p4: { location: { latitude: 40.71, longitude: -74.01 }, pieces: 4, moderated: true, updated: '2024-04-05' }
+    };
+    // Dictionary mapping coords (coordinateKey format: "lat,lon") to country
+    const MOCK_DICTIONARY = {
+      '51.46,-0.31': { country: 'United Kingdom', countryCode: 'GB', constituency: 'London' },
+      '51.52,-0.02': { country: 'United Kingdom', countryCode: 'GB', constituency: 'London' },
+      '48.86,2.35': { country: 'France', countryCode: 'FR', constituency: 'Paris' },
+      '40.71,-74.01': { country: 'United States', countryCode: 'US', constituency: 'New York' }
+    };
+  </script>
+  <script src="../js/config.js"></script>
+  <script src="../js/dom.js"></script>
+  <script src="../js/photo-helpers.js"></script>
+  <script src="../js/location.js"></script>
+  <script src="../js/date-utils.js"></script>
+  <script src="../js/filter-rules.js"></script>
+  <script src="../js/stats.js"></script>
+  <script src="../js/missions.js"></script>
+  <script src="../js/filters.js"></script>
+  <script>
+    // Run manual test
+    (function runManualTest() {
+      const countryEl = document.getElementById('filterCountry');
+      const constituencyEl = document.getElementById('filterConstituency');
+      const countEl = document.getElementById('filteredCount');
+
+      if (!countryEl || typeof buildCountryCounts !== 'function' || typeof filterPhotos !== 'function') {
+        console.error('Manual test failed: required functions not loaded');
+        return;
+      }
+
+      // Populate country dropdown
+      const countries = buildCountryCounts(MOCK_PHOTOS, MOCK_DICTIONARY);
+      countryEl.innerHTML = '<option value="">All countries</option>';
+      for (const item of countries) {
+        const flag = typeof countryCodeToFlag === 'function' ? countryCodeToFlag(item.countryCode) : '🌍';
+        countryEl.appendChild(new Option(`${flag} ${item.country} (${item.count})`, item.key));
+      }
+
+      const updateFiltered = () => {
+        const selectedCountry = countryEl.value;
+        const filtered = filterPhotos(
+          MOCK_PHOTOS,
+          MOCK_DICTIONARY,
+          {}, // missions
+          selectedCountry,
+          '', // constituency
+          '', // mission
+          'all', // status
+          '', '', '', '' // year, month, day, brandLabelSearch
+        );
+        const count = Object.keys(filtered).length;
+        countEl.textContent = `Filtered photos: ${count}`;
+        return { filtered, count };
+      };
+
+      countryEl.addEventListener('change', updateFiltered);
+      let result = updateFiltered();
+
+      // Assertions
+      const tests = [];
+      tests.push({
+        name: 'Country dropdown shows 3 countries',
+        pass: countries.length === 3
+      });
+      tests.push({
+        name: 'UK has 2 photos',
+        pass: countries.find(c => c.country === 'United Kingdom')?.count === 2
+      });
+      tests.push({
+        name: 'France has 1 photo',
+        pass: countries.find(c => c.country === 'France')?.count === 1
+      });
+      tests.push({
+        name: 'US has 1 photo',
+        pass: countries.find(c => c.country === 'United States')?.count === 1
+      });
+      tests.push({
+        name: 'All countries shows 4 photos',
+        pass: result.count === 4
+      });
+
+      // Test France filter
+      countryEl.value = countries.find(c => c.country === 'France')?.key || '';
+      countryEl.dispatchEvent(new Event('change'));
+      result = updateFiltered();
+      tests.push({
+        name: 'France filter shows 1 photo',
+        pass: result.count === 1
+      });
+
+      // Reset to All
+      countryEl.value = '';
+      countryEl.dispatchEvent(new Event('change'));
+
+      const passed = tests.filter(t => t.pass).length;
+      const failed = tests.filter(t => !t.pass);
+      console.log('%cCountry Filter Manual Test Results', 'font-size: 16px; font-weight: bold');
+      console.log(`${passed}/${tests.length} tests passed`);
+      tests.forEach(t => console.log(t.pass ? '✓' : '✗', t.name));
+      if (failed.length) {
+        console.error('Failed:', failed.map(t => t.name));
+      } else {
+        console.log('%cAll tests passed!', 'color: green; font-weight: bold');
+      }
+    })();
+  </script>
+</body>
+</html>
