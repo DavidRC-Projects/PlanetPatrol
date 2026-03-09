@@ -1,6 +1,6 @@
 /** Location helpers. */
 
-const LOCATION_DICT_STORAGE_KEY = 'planetpatrol.locationDictionary.v3';
+const LOCATION_DICT_STORAGE_KEY = 'planetpatrol.locationDictionary.v4';
 const LOCATION_REQUEST_DELAY_MS = 80;
 const LOCATION_REQUEST_TIMEOUT_MS = 6000;
 const UNKNOWN_LOCATION_LABEL = 'Unknown location';
@@ -331,6 +331,16 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** UK state_district is England/Scotland/Wales - too broad. Prefer county for UK. */
+function pickConstituencyFromAddress(address, countryCode) {
+  const addr = address || {};
+  const cc = String(countryCode || '').trim().toUpperCase();
+  if (cc === 'GB') {
+    return addr.county || addr.state_district || addr.city_district || addr.city || '';
+  }
+  return addr.state_district || addr.county || addr.city_district || addr.city || '';
+}
+
 async function fetchServerReverseGeocode(lat, lon) {
   const query = `lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
   const payload = await fetchJsonWithTimeout(`${LOCATION_REVERSE_GEOCODE_API}?${query}`);
@@ -341,10 +351,7 @@ async function fetchServerReverseGeocode(lat, lon) {
   }
   const countryCode = String(payload?.address?.country_code || '').trim().toUpperCase();
   const constituency = normalizeConstituencyName(
-    payload?.address?.state_district ||
-    payload?.address?.county ||
-    payload?.address?.city_district ||
-    payload?.address?.city
+    pickConstituencyFromAddress(payload?.address, countryCode)
   );
   return {
     label: constituency ? `${constituency}, ${country}` : country,
