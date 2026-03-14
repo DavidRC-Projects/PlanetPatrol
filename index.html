@@ -33,6 +33,18 @@
         <div class="card"><span class="value" id="moderated">0</span><div class="label">Published photos</div></div>
         <div class="card"><span class="value" id="unmoderated">0</span><div class="label">Unpublished photos</div></div>
         <div class="card"><span class="value" id="totalPhotos">0</span><div class="label">Total photos</div></div>
+        <button id="totalSurveysOpen" type="button" class="card card-action">
+          <span class="value" id="totalSurveys">0</span>
+          <div class="label">Observational surveys</div>
+          <span class="card-action-hint">Click to view details</span>
+          <span class="card-action-icon" aria-hidden="true">→</span>
+        </button>
+        <button id="totalIncidentsOpen" type="button" class="card card-action">
+          <span class="value" id="totalIncidents">0</span>
+          <div class="label">Incident reports</div>
+          <span class="card-action-hint">Click to view details</span>
+          <span class="card-action-icon" aria-hidden="true">→</span>
+        </button>
         <section class="card country-box">
           <div class="country-filters">
             <label class="filter-field">
@@ -63,19 +75,6 @@
             </select>
           </label>
         </section>
-        <section class="card heat-map-box">
-          <button id="waterTestsHeatmapBtn" type="button" class="heat-map-card-btn">
-            <span class="heat-map-globe" aria-hidden="true">🌍</span>
-            <span class="heat-map-label">Water tests map</span>
-          </button>
-        </section>
-        <section class="card pie-chart-box">
-          <h3 class="pie-chart-heading">Pie charts</h3>
-          <div class="pie-chart-buttons">
-            <button id="pieChartBrandsBtn" type="button" class="pie-chart-card-btn">Brands</button>
-            <button id="pieChartLabelsBtn" type="button" class="pie-chart-card-btn">Labels</button>
-          </div>
-        </section>
       </div>
 
       <section class="filters" id="filters">
@@ -87,8 +86,64 @@
         <label class="filter-field"><span class="filter-label">Brand / label</span><input id="filterBrandLabelSearch" type="text" placeholder="Type exact brand or label" autocomplete="off"></label>
       </section>
 
-      <div class="insights-grid" id="insights">
-        <section class="panel ts-panel">
+      <div class="insights-layout" id="insights">
+        <div class="pie-leaderboard-row">
+          <section class="panel pie-chart-panel" id="pieChartPanel">
+            <div class="pie-chart-panel-header">
+              <h2 class="insight-heading">Brands & Labels</h2>
+            </div>
+            <div class="pie-chart-panel-buttons">
+              <div class="pie-chart-panel-group">
+                <span class="pie-chart-panel-label">Pie charts</span>
+                <button id="pieChartBrandsBtn" type="button" class="pie-chart-card-btn">Brands</button>
+                <button id="pieChartLabelsBtn" type="button" class="pie-chart-card-btn">Labels</button>
+              </div>
+              <div class="pie-chart-panel-group">
+                <span class="pie-chart-panel-label">Top 50</span>
+                <button id="topBrandsOpen" type="button" class="pie-chart-card-btn pie-chart-card-btn--top50">Top 50 Brands</button>
+                <button id="topLabelsOpen" type="button" class="pie-chart-card-btn pie-chart-card-btn--top50">Top 50 Labels</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel leaderboard-panel">
+            <details class="collapsible leaderboard-card insight-card" id="missionsLeaderboard">
+              <summary>
+                <span class="leaderboard-head">
+                  <span class="leaderboard-title">Mission leaderboard</span>
+                  <span class="leaderboard-hint">litter pieces collected</span>
+                </span>
+                <button id="missionPartnerOpen" class="link-button leaderboard-summary-action" type="button">View top 5 brands and labels</button>
+                <span id="topMissionsSummary" class="leaderboard-podium" aria-label="Top 3 missions preview"></span>
+              </summary>
+
+              <div class="leaderboard-body">
+                <p class="muted">Total pieces collected per mission</p>
+                <div class="leaderboard-table-wrap" role="region" aria-label="Top missions table" tabindex="0">
+                  <table class="leaderboard-table">
+                    <thead>
+                      <tr>
+                        <th scope="col" class="leaderboard-col-rank">Rank</th>
+                        <th scope="col">Mission</th>
+                        <th scope="col" class="leaderboard-col-num">Pieces</th>
+                      </tr>
+                    </thead>
+                    <tbody id="topMissionsList"></tbody>
+                  </table>
+                </div>
+              </div>
+            </details>
+          </section>
+
+          <section class="panel heat-map-panel">
+            <button id="waterTestsHeatmapBtn" type="button" class="heat-map-card-btn heat-map-card-btn--panel">
+              <span class="heat-map-globe" aria-hidden="true">🌍</span>
+              <span class="heat-map-label">Water tests map</span>
+            </button>
+          </section>
+        </div>
+
+        <section class="panel ts-panel ts-panel--full">
           <section class="ts-card insight-card ts-card-static" id="timeSeriesPanel">
             <div class="ts-card-header">
               <h2 class="insight-heading">Litter trend over time</h2>
@@ -101,50 +156,7 @@
             <p id="timeSeriesEmpty" class="muted hidden" hidden>No data for current filters.</p>
           </section>
         </section>
-
-        <section class="panel leaderboard-panel">
-          <details class="collapsible leaderboard-card insight-card" id="missionsLeaderboard">
-            <summary>
-              <span class="leaderboard-head">
-                <span class="leaderboard-title">Mission leaderboard</span>
-                <span class="leaderboard-hint">litter pieces collected</span>
-              </span>
-              <button id="missionPartnerOpen" class="link-button leaderboard-summary-action" type="button">View top 5 brands and labels</button>
-              <span id="topMissionsSummary" class="leaderboard-podium" aria-label="Top 3 missions preview"></span>
-            </summary>
-
-            <div class="leaderboard-body">
-              <p class="muted">Total pieces collected per mission</p>
-              <div class="leaderboard-table-wrap" role="region" aria-label="Top missions table" tabindex="0">
-                <table class="leaderboard-table">
-                  <thead>
-                    <tr>
-                      <th scope="col" class="leaderboard-col-rank">Rank</th>
-                      <th scope="col">Mission</th>
-                      <th scope="col" class="leaderboard-col-num">Pieces</th>
-                    </tr>
-                  </thead>
-                  <tbody id="topMissionsList"></tbody>
-                </table>
-              </div>
-            </div>
-          </details>
-        </section>
       </div>
-
-      <section class="panel panel-collection" id="collections">
-        <h2>Most Collected Brands & Labels (Top 50)</h2>
-        <div class="panel-grid">
-          <details class="collapsible">
-            <summary><span>Brands</span><span class="collapsible-hint">click for details</span></summary>
-            <ol id="topBrandsList" class="rank-list"></ol>
-          </details>
-          <details class="collapsible">
-            <summary><span>Labels</span><span class="collapsible-hint">click for details</span></summary>
-            <ol id="topLabelsList" class="rank-list"></ol>
-          </details>
-        </div>
-      </section>
 
     </div>
   </main>
@@ -242,6 +254,16 @@
     </div>
   </div>
 
+  <div id="topBrandsLabelsModal" class="ts-modal hidden" hidden aria-hidden="true">
+    <div class="ts-modal-dialog mission-partner-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="topBrandsLabelsModalTitle">
+      <button id="topBrandsLabelsModalClose" class="ts-modal-close" type="button" aria-label="Close top 50 list">×</button>
+      <h2 id="topBrandsLabelsModalTitle">Top 50 Brands</h2>
+      <div class="top-brandslabels-modal-scroll" role="region" aria-label="Top 50 list" tabindex="0">
+        <ol id="topBrandsLabelsModalList" class="rank-list"></ol>
+      </div>
+    </div>
+  </div>
+
   <div id="missionPartnerModal" class="ts-modal hidden" hidden aria-hidden="true">
     <div class="ts-modal-dialog mission-partner-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="missionPartnerModalTitle">
       <button id="missionPartnerModalClose" class="ts-modal-close" type="button" aria-label="Close mission partner snapshot">×</button>
@@ -256,6 +278,36 @@
           <ol id="missionPartnerTopLabels" class="rank-list"></ol>
         </section>
       </div>
+    </div>
+  </div>
+
+  <div id="incidentReportsModal" class="ts-modal hidden" hidden aria-hidden="true">
+    <div class="ts-modal-dialog mission-partner-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="incidentReportsModalTitle">
+      <button id="incidentReportsModalClose" class="ts-modal-close" type="button" aria-label="Close incident reports">×</button>
+      <h2 id="incidentReportsModalTitle">Incident reports (latest)</h2>
+      <p class="muted">Click an image to open full incident details.</p>
+      <div id="incidentGalleryList" class="record-gallery-list"></div>
+    </div>
+  </div>
+
+  <div id="surveyReportsModal" class="ts-modal hidden" hidden aria-hidden="true">
+    <div class="ts-modal-dialog mission-partner-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="surveyReportsModalTitle">
+      <button id="surveyReportsModalClose" class="ts-modal-close" type="button" aria-label="Close observational surveys">×</button>
+      <h2 id="surveyReportsModalTitle">Observational surveys (latest)</h2>
+      <p class="muted">Click an image to open full survey details.</p>
+      <div id="surveyGalleryList" class="record-gallery-list"></div>
+    </div>
+  </div>
+
+  <div id="recordDetailModal" class="ts-modal hidden" hidden aria-hidden="true">
+    <div class="ts-modal-dialog mission-partner-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="recordDetailModalTitle">
+      <button id="recordDetailModalClose" class="ts-modal-close" type="button" aria-label="Close record details">×</button>
+      <h2 id="recordDetailModalTitle">Record details</h2>
+      <div id="recordDetailModalImageWrap" class="record-modal-image-wrap">
+        <img id="recordDetailModalImage" class="record-modal-image hidden" hidden alt="">
+        <p id="recordDetailModalImageEmpty" class="muted">Image unavailable for this record.</p>
+      </div>
+      <div id="recordDetailModalBody" class="record-modal-body"></div>
     </div>
   </div>
 

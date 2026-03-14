@@ -43,6 +43,18 @@ async function fetchMissions() {
   }
 }
 
+/** Loads observational surveys from the API proxy. */
+async function fetchSurveys() {
+  const payload = await fetchObjectMapPayload(SURVEYS_PROXY_URL, 'surveys', 'Surveys');
+  return payload;
+}
+
+/** Loads incident reports from the API proxy. */
+async function fetchIncidents() {
+  const payload = await fetchObjectMapPayload(INCIDENTS_PROXY_URL, 'incidents', 'Incidents');
+  return payload;
+}
+
 /** Tries local server Firestore proxy source. */
 async function tryFirestoreProxy(timeoutMs) {
   return fetchAndNormalize(FIRESTORE_PROXY_URL, timeoutMs);
@@ -92,5 +104,26 @@ function isExpectedApiPayload(data) {
     typeof data.photos === 'object' &&
     !Array.isArray(data.photos)
   );
+}
+
+async function fetchObjectMapPayload(url, key, label) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) throw new Error(`${label} API request failed (${res.status}).`);
+    const payload = await res.json();
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload) || !payload[key] || typeof payload[key] !== 'object') {
+      throw new Error(`Unexpected ${label.toLowerCase()} API response format. Expected { ${key}: { id: record } }.`);
+    }
+    return payload;
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw new Error(`${label} API request timed out.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 

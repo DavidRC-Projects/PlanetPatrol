@@ -1,5 +1,5 @@
 /** App entry point. Loads data and wires UI controls. */
-const appState = { photos: {}, missions: {}, locationDictionary: {} };
+const appState = { photos: {}, missions: {}, surveys: {}, incidents: {}, locationDictionary: {} };
 
 /**
  * Sets section visibility in a way that works for layout + accessibility.
@@ -81,12 +81,16 @@ async function loadData() {
   setViewState({ loading: 'block', dashboard: 'none', error: 'none' });
 
   try {
-    const [photoPayload, missionPayload] = await Promise.all([
+    const [photoPayload, missionPayload, surveyPayload, incidentPayload] = await Promise.all([
       fetchData(),
-      fetchMissions().catch(() => ({ missions: {} }))
+      fetchMissions().catch(() => ({ missions: {} })),
+      fetchSurveys().catch(() => ({ surveys: {} })),
+      fetchIncidents().catch(() => ({ incidents: {} }))
     ]);
     appState.photos = photoPayload.photos;
     appState.missions = missionPayload.missions || {};
+    appState.surveys = surveyPayload.surveys || {};
+    appState.incidents = incidentPayload.incidents || {};
     await warmLocationDictionary(appState.photos);
     showDashboard();
     populateYearOptions(appState.photos);
@@ -106,6 +110,9 @@ function init() {
   bindTimeSeriesModal();
   bindPieChartModals();
   bindMissionPartnerModal();
+  bindTopBrandsLabelsModal();
+  bindFieldReportCardsToModals();
+  bindRecordDetailModal();
 
   const retryEl = getElement(DOM_IDS.errorRetry);
   if (retryEl) retryEl.addEventListener('click', () => void loadData());

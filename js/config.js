@@ -2,6 +2,9 @@
 const FIRESTORE_PROXY_URL = '/api/photos';
 const MISSIONS_PROXY_URL = '/api/missions';
 const WATER_TESTS_PROXY_URL = '/api/water-tests';
+const SURVEYS_PROXY_URL = '/api/surveys';
+const INCIDENTS_PROXY_URL = '/api/incidents';
+const STORAGE_BUCKET_PUBLIC_BASE_URL = 'https://storage.googleapis.com/plastic-patrol-fd3b3.appspot.com';
 const ENABLE_AREA_LOOKUP = true;
 
 /** DOM element IDs. */
@@ -16,6 +19,10 @@ const DOM_IDS = {
   moderated: 'moderated',
   unmoderated: 'unmoderated',
   totalPhotos: 'totalPhotos',
+  totalSurveys: 'totalSurveys',
+  totalIncidents: 'totalIncidents',
+  totalSurveysOpen: 'totalSurveysOpen',
+  totalIncidentsOpen: 'totalIncidentsOpen',
   filterStatus: 'filterStatus',
   filterYear: 'filterYear',
   filterMonth: 'filterMonth',
@@ -55,8 +62,25 @@ const DOM_IDS = {
   missionPartnerTopLabelsTitle: 'missionPartnerTopLabelsTitle',
   missionPartnerTopBrands: 'missionPartnerTopBrands',
   missionPartnerTopLabels: 'missionPartnerTopLabels',
-  topBrandsList: 'topBrandsList',
-  topLabelsList: 'topLabelsList',
+  topBrandsOpen: 'topBrandsOpen',
+  topLabelsOpen: 'topLabelsOpen',
+  topBrandsLabelsModal: 'topBrandsLabelsModal',
+  topBrandsLabelsModalClose: 'topBrandsLabelsModalClose',
+  topBrandsLabelsModalTitle: 'topBrandsLabelsModalTitle',
+  topBrandsLabelsModalList: 'topBrandsLabelsModalList',
+  incidentGalleryList: 'incidentGalleryList',
+  surveyGalleryList: 'surveyGalleryList',
+  incidentReportsModal: 'incidentReportsModal',
+  incidentReportsModalClose: 'incidentReportsModalClose',
+  surveyReportsModal: 'surveyReportsModal',
+  surveyReportsModalClose: 'surveyReportsModalClose',
+  recordDetailModal: 'recordDetailModal',
+  recordDetailModalClose: 'recordDetailModalClose',
+  recordDetailModalTitle: 'recordDetailModalTitle',
+  recordDetailModalImage: 'recordDetailModalImage',
+  recordDetailModalImageWrap: 'recordDetailModalImageWrap',
+  recordDetailModalImageEmpty: 'recordDetailModalImageEmpty',
+  recordDetailModalBody: 'recordDetailModalBody',
   filterWaterTestType: 'filterWaterTestType',
   heatmapFilterCountry: 'heatmapFilterCountry',
   waterTestsModal: 'waterTestsModal',

@@ -10,6 +10,8 @@ const ROOT_DIR = __dirname;
 const PHOTOS_CACHE_TTL_MS = Number(process.env.PHOTOS_CACHE_TTL_MS) || 5 * 60 * 1000;
 const MISSIONS_CACHE_TTL_MS = Number(process.env.MISSIONS_CACHE_TTL_MS) || 5 * 60 * 1000;
 const WATER_TESTS_CACHE_TTL_MS = Number(process.env.WATER_TESTS_CACHE_TTL_MS) || 5 * 60 * 1000;
+const SURVEYS_CACHE_TTL_MS = Number(process.env.SURVEYS_CACHE_TTL_MS) || 5 * 60 * 1000;
+const INCIDENTS_CACHE_TTL_MS = Number(process.env.INCIDENTS_CACHE_TTL_MS) || 5 * 60 * 1000;
 const LOCATION_CACHE_TTL_MS = Number(process.env.LOCATION_CACHE_TTL_MS) || 24 * 60 * 60 * 1000;
 const LOCATION_CACHE_MAX_SIZE = Number(process.env.LOCATION_CACHE_MAX_SIZE) || 5000;
 const SERVICE_ACCOUNT_PATH = process.env.SERVICE_ACCOUNT_PATH
@@ -59,6 +61,10 @@ let missionsCache = { payload: null, expiresAt: 0 };
 let inflightMissionsFetch = null;
 const waterTestsCache = new Map(); // type -> { payload, expiresAt }
 const inflightWaterTestsFetch = new Map(); // type -> Promise
+let surveysCache = { payload: null, expiresAt: 0 };
+let inflightSurveysFetch = null;
+let incidentsCache = { payload: null, expiresAt: 0 };
+let inflightIncidentsFetch = null;
 const locationCache = new Map(); // "lat,lon" -> { payload, expiresAt }
 const inflightLocationFetch = new Map(); // "lat,lon" -> Promise
 
@@ -135,6 +141,24 @@ async function fetchFirestoreWaterTests(type, limit) {
     records[doc.id] = serializeFirestoreValue(doc.data());
   });
   return { type: safeType, records, limit: n };
+}
+
+async function fetchFirestoreSurveys() {
+  const snapshot = await db.collection('surveys').get();
+  const surveys = {};
+  snapshot.forEach((doc) => {
+    surveys[doc.id] = serializeFirestoreValue(doc.data());
+  });
+  return { surveys };
+}
+
+async function fetchFirestoreIncidents() {
+  const snapshot = await db.collection('incidents').get();
+  const incidents = {};
+  snapshot.forEach((doc) => {
+    incidents[doc.id] = serializeFirestoreValue(doc.data());
+  });
+  return { incidents };
 }
 
 function filterWaterTestRecordsByTime(records, from, to) {
@@ -251,6 +275,54 @@ async function getWaterTestsWithCache(type, limit) {
 
   inflightWaterTestsFetch.set(safeType, p);
   return p;
+}
+
+async function getSurveysWithCache() {
+  const now = Date.now();
+  if (surveysCache.payload && surveysCache.expiresAt > now) return surveysCache.payload;
+  if (inflightSurveysFetch) return inflightSurveysFetch;
+
+  inflightSurveysFetch = (async () => {
+    try {
+      const payload = await fetchFirestoreSurveys();
+      surveysCache = {
+        payload,
+        expiresAt: Date.now() + SURVEYS_CACHE_TTL_MS
+      };
+      return payload;
+    } catch (error) {
+      if (surveysCache.payload) return surveysCache.payload;
+      throw error;
+    } finally {
+      inflightSurveysFetch = null;
+    }
+  })();
+
+  return inflightSurveysFetch;
+}
+
+async function getIncidentsWithCache() {
+  const now = Date.now();
+  if (incidentsCache.payload && incidentsCache.expiresAt > now) return incidentsCache.payload;
+  if (inflightIncidentsFetch) return inflightIncidentsFetch;
+
+  inflightIncidentsFetch = (async () => {
+    try {
+      const payload = await fetchFirestoreIncidents();
+      incidentsCache = {
+        payload,
+        expiresAt: Date.now() + INCIDENTS_CACHE_TTL_MS
+      };
+      return payload;
+    } catch (error) {
+      if (incidentsCache.payload) return incidentsCache.payload;
+      throw error;
+    } finally {
+      inflightIncidentsFetch = null;
+    }
+  })();
+
+  return inflightIncidentsFetch;
 }
 
 function sendJson(res, statusCode, body) {
@@ -432,6 +504,26 @@ const server = http.createServer(async (req, res) => {
       if (Number.isFinite(fromMs) || Number.isFinite(toMs)) {
         payload.records = filterWaterTestRecordsByTime(payload.records || {}, fromMs, toMs);
       }
+      sendJson(res, 200, payload);
+    } catch (error) {
+      sendJson(res, 500, { error: `Firestore read failed: ${error.message}` });
+    }
+    return;
+  }
+
+  if (req.url && req.url.startsWith('/api/surveys')) {
+    try {
+      const payload = await getSurveysWithCache();
+      sendJson(res, 200, payload);
+    } catch (error) {
+      sendJson(res, 500, { error: `Firestore read failed: ${error.message}` });
+    }
+    return;
+  }
+
+  if (req.url && req.url.startsWith('/api/incidents')) {
+    try {
+      const payload = await getIncidentsWithCache();
       sendJson(res, 200, payload);
     } catch (error) {
       sendJson(res, 500, { error: `Firestore read failed: ${error.message}` });

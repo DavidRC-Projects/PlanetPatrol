@@ -100,7 +100,7 @@ body {
 
 .heat-map-globe {
   display: block;
-  font-size: 2.5rem;
+  font-size: 4.5rem;
   line-height: 1;
   animation: heat-map-globe-spin 8s linear infinite;
 }
@@ -213,29 +213,76 @@ body {
 
 .card {
   background: white;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(9, 30, 46, 0.08);
+  border: 1px solid rgba(145, 180, 201, 0.32);
   min-width: 140px;
+}
+
+.card-action {
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid rgba(163, 192, 209, 0.35);
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.card-action:hover {
+  border-color: rgba(14, 165, 233, 0.55);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(7, 25, 40, 0.12);
+  background: linear-gradient(165deg, rgba(232, 252, 248, 0.5) 0%, rgba(255, 255, 255, 0.9) 100%);
+}
+
+.card-action:focus-visible {
+  outline: 2px solid rgba(2, 132, 199, 0.55);
+  outline-offset: 2px;
+}
+
+.card-action-hint {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #0f766e;
+  margin-top: 0.35rem;
+  letter-spacing: 0.02em;
+}
+
+.card-action-icon {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+  color: #0f766e;
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+
+.card-action:hover .card-action-icon {
+  transform: translateY(-50%) translateX(3px);
+  opacity: 1;
 }
 
 .card .value {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #0a6d3d;
+  color: var(--accent, #0f766e);
 }
 
 .card .label {
   font-size: 0.85rem;
-  color: #666;
+  color: var(--text-muted, #4f6874);
   margin-top: 0.25rem;
 }
 
 .filters {
   background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(9, 30, 46, 0.08);
+  border: 1px solid rgba(145, 180, 201, 0.32);
   margin-bottom: 1rem;
   display: flex;
   gap: 1rem;
@@ -260,14 +307,16 @@ body {
 
 .filters button {
   padding: 0.4rem 1rem;
-  background: #0a6d3d;
+  background: var(--accent, #0f766e);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
 }
 
-.filters button:hover { background: #084d2a; }
+.filters button:hover {
+  background: #0a5e58;
+}
 
 .panel {
   background: white;
@@ -569,7 +618,7 @@ body {
 
 .podium-count {
   font-weight: 800;
-  color: #0a6d3d;
+  color: var(--accent, #0f766e);
 }
 
 .leaderboard-body {
@@ -1179,11 +1228,75 @@ body {
   outline-offset: 1px;
 }
 
-.insights-grid {
+.pie-leaderboard-row {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 0.9rem;
-  align-items: start;
+  grid-template-columns: minmax(200px, 0.45fr) 1fr 1fr;
+  gap: 1rem;
+  align-items: stretch;
+  margin-bottom: 0.95rem;
+}
+
+.leaderboard-panel {
+  justify-self: start;
+}
+
+.pie-chart-panel-header {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 0.85rem;
+  text-align: center;
+}
+
+.pie-chart-panel-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  justify-content: center;
+}
+
+.pie-chart-panel-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 180px;
+  align-items: center;
+}
+
+.pie-chart-panel-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pie-chart-panel-group .pie-chart-card-btn {
+  min-height: 60px;
+}
+
+.pie-chart-card-btn--top50 {
+  font-size: 0.9rem;
+}
+
+.heat-map-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.heat-map-card-btn--panel {
+  flex: 1;
+  min-height: 100px;
+  border-radius: 12px;
+}
+
+.ts-panel--full {
+  width: 100%;
+  max-width: 100%;
+}
+
+.insights-layout {
+  display: block;
 }
 
 .panel {
@@ -1240,7 +1353,7 @@ body {
 }
 
 @media (max-width: 980px) {
-  .insights-grid {
+  .pie-leaderboard-row {
     grid-template-columns: 1fr;
   }
 
@@ -1335,7 +1448,8 @@ body {
 .card {
   background:
     linear-gradient(165deg, rgba(255, 255, 255, 0.90) 0%, rgba(244, 251, 255, 0.78) 100%);
-  border: 1px solid rgba(163, 192, 209, 0.35);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
 }
 
 .card .value {
@@ -1421,13 +1535,8 @@ body {
   margin-bottom: 0.32rem;
 }
 
-/* Symmetrical + interactive insight cards */
-.insights-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: stretch;
-}
-
-.insights-grid > .panel {
+/* Brands + Mission row: two equal columns */
+.pie-leaderboard-row > .panel {
   height: 100%;
   margin-bottom: 0;
 }
@@ -1535,9 +1644,10 @@ body {
 }
 
 @media (max-width: 980px) {
-  .insights-grid > .panel {
-    margin-bottom: 0.95rem;
+  .pie-leaderboard-row > .panel {
+    margin-bottom: 0;
   }
+  /* Grid gap handles spacing between stacked panels */
 }
 
 @keyframes loading-spin {
@@ -1558,13 +1668,14 @@ html {
 
 .cards,
 .filters,
-.insights-grid,
+.insights-layout,
 .panel-collection {
   scroll-margin-top: 4.3rem;
 }
 
 .panel,
-.card {
+.card,
+.filters {
   border-radius: 16px;
 }
 
@@ -1663,7 +1774,8 @@ html {
 }
 
 /* Match time-series heading styling to mission leaderboard heading. */
-.ts-card-header {
+.ts-card-header,
+.pie-chart-panel-header {
   width: auto;
   display: flex;
   justify-content: center;
@@ -1671,7 +1783,12 @@ html {
   text-align: center;
 }
 
-.ts-card-header .insight-heading {
+.pie-chart-panel-header {
+  margin-bottom: 0.85rem;
+}
+
+.ts-card-header .insight-heading,
+.pie-chart-panel-header .insight-heading {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1824,6 +1941,127 @@ body.modal-open {
   width: min(900px, 95vw);
 }
 
+.top-brandslabels-modal-scroll {
+  max-height: min(70vh, 480px);
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
+
+.brands-labels-cards .brands-label-card {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+}
+
+.brands-label-card .brands-label-card-title {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
 .water-tests-modal-dialog {
   width: min(1200px, 95vw);
+}
+
+.record-gallery-list {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  margin-top: 0.5rem;
+}
+
+.record-card-btn {
+  border: 1px solid rgba(141, 175, 196, 0.45);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+  padding: 0.45rem;
+  display: grid;
+  gap: 0.4rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.record-card-btn:hover {
+  border-color: rgba(2, 132, 199, 0.45);
+  box-shadow: 0 8px 18px rgba(7, 25, 40, 0.1);
+}
+
+.record-card-btn:focus-visible {
+  outline: 2px solid rgba(2, 132, 199, 0.55);
+  outline-offset: 2px;
+}
+
+.record-thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #e6eef2;
+}
+
+.record-thumb--broken {
+  display: none;
+}
+
+.record-card-meta {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.record-card-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #16313a;
+  line-height: 1.2;
+}
+
+.record-card-sub {
+  font-size: 0.78rem;
+  color: #5a6b73;
+}
+
+.record-modal-image-wrap {
+  margin-bottom: 0.85rem;
+}
+
+.record-modal-image {
+  width: 100%;
+  max-height: min(52vh, 480px);
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid rgba(141, 175, 196, 0.5);
+  background: #eef5f8;
+}
+
+.record-modal-body {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.record-detail-row {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 0.55rem;
+  border-bottom: 1px solid rgba(231, 239, 237, 0.9);
+  padding: 0.35rem 0.1rem;
+}
+
+.record-detail-key {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #4f6874;
+  text-transform: none;
+}
+
+.record-detail-value {
+  font-size: 0.86rem;
+  color: #11232c;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 720px) {
+  .record-detail-row {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
 }
