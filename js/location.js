@@ -19,6 +19,10 @@ const COUNTRY_NAME_ALIASES = {
   'u.s.a.': 'United States',
   'united states of america': 'United States',
   uk: 'United Kingdom',
+  england: 'United Kingdom',
+  scotland: 'United Kingdom',
+  wales: 'United Kingdom',
+  'northern ireland': 'United Kingdom',
   uae: 'United Arab Emirates',
   'ελλάς': 'Greece',
   eire: 'Ireland',
@@ -94,7 +98,7 @@ let resolutionPayloadPromise = null;
 const countryCodeLookupCache = new WeakMap();
 let countryNameToCodeLookupCache = null;
 let countryNameToEnglishLookupCache = null;
-let locationEnrichmentJobs = 0;
+const locationEnrichmentJobsByStorageKey = new Map();
 const DICTIONARY_KEY_PATTERN = /^-?\d+\.\d{2},-?\d+\.\d{2}$/;
 
 /**
@@ -331,14 +335,20 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** UK state_district is England/Scotland/Wales - too broad. Prefer county for UK. */
+/** For UK: prefer county when present and more specific than England/Scotland/Wales.
+ * Otherwise use state_district to avoid "Not specified" when APIs omit county. */
 function pickConstituencyFromAddress(address, countryCode) {
   const addr = address || {};
   const cc = String(countryCode || '').trim().toUpperCase();
-  if (cc === 'GB') {
-    return addr.county || addr.state_district || addr.city_district || addr.city || '';
+  const stateDistrict = String(addr.state_district || '').trim();
+  const county = String(addr.county || '').trim();
+  const cityDistrict = String(addr.city_district || '').trim();
+  const city = String(addr.city || '').trim();
+  const ukConstituent = ['england', 'scotland', 'wales', 'northern ireland'];
+  if (cc === 'GB' && county && !ukConstituent.includes(county.toLowerCase())) {
+    return county;
   }
-  return addr.state_district || addr.county || addr.city_district || addr.city || '';
+  return stateDistrict || county || cityDistrict || city || '';
 }
 
 async function fetchServerReverseGeocode(lat, lon) {
@@ -502,6 +512,41 @@ async function buildConstituencyCountsFromResolutionData(selectedCountry = '') {
     if (getCountryGroupKey(country, countryCode) !== selectedCountry) continue;
     const constituency = normalizeConstituencyName(row?.detail);
     const count = Number(row?.count) || 1;
+    if (constituency) {
+      const key = `${selectedCountry}::${constituency.toLowerCase()}`;
+      const current = groups.get(key) || { key, constituency, count: 0 };
+      current.count += count;
+      groups.set(key, current);
+    } else {
+      const key = `${selectedCountry}${UNSPECIFIED_LOCATION_KEY_SUFFIX}`;
+      const current = groups.get(key) || { key, constituency: 'Not specified', count: 0 };
+      current.count += count;
+      groups.set(key, current);
+    }
+  }
+  return [...groups.values()]
+    .sort((a, b) => b.count - a.count || (a.constituency || '').localeCompare(b.constituency || ''));
+}
+
+/**
+ * Merges resolution data (full coord coverage + counts) with dictionary (constituency names).
+ * Ensures all locations in the selected country appear with correct counts; dictionary
+ * supplies county names where we have reverse-geocoded them.
+ */
+async function buildConstituencyCountsMerged(dictionary, selectedCountry = '') {
+  if (!selectedCountry) return [];
+  const payload = await getResolutionPayload();
+  const rows = Array.isArray(payload?.locations) ? payload.locations : [];
+  const groups = new Map();
+  for (const row of rows) {
+    const country = normalizeCountryName(row?.country);
+    if (country === UNKNOWN_COUNTRY_LABEL) continue;
+    const countryCode = getCountryCodeFromName(country);
+    if (getCountryGroupKey(country, countryCode) !== selectedCountry) continue;
+    const count = Number(row?.count) || 1;
+    const dictKey = coordinateKey(Number(row?.lat), Number(row?.lon));
+    const entry = normalizeLocationEntry((dictionary || {})[dictKey]);
+    const constituency = normalizeConstituencyName(entry.constituency) || normalizeConstituencyName(row?.detail);
     if (constituency) {
       const key = `${selectedCountry}::${constituency.toLowerCase()}`;
       const current = groups.get(key) || { key, constituency, count: 0 };
@@ -691,7 +736,8 @@ async function getOrBuildLocationDictionary(photos, options = {}) {
   const coords = getUniqueCoordinates(photos);
 
   const requireConstituency = options.requireConstituency === true;
-  locationEnrichmentJobs += 1;
+  const currentJobs = Number(locationEnrichmentJobsByStorageKey.get(storageKey)) || 0;
+  locationEnrichmentJobsByStorageKey.set(storageKey, currentJobs + 1);
   try {
     for (const c of coords) {
       const existing = normalizeLocationEntry(dictionary[c.key]);
@@ -705,14 +751,19 @@ async function getOrBuildLocationDictionary(photos, options = {}) {
       if (requestDelayMs > 0 && fetched._usedLiveLookup) await sleep(requestDelayMs);
     }
   } finally {
-    locationEnrichmentJobs = Math.max(0, locationEnrichmentJobs - 1);
+    const remaining = Math.max(0, (Number(locationEnrichmentJobsByStorageKey.get(storageKey)) || 0) - 1);
+    if (remaining > 0) {
+      locationEnrichmentJobsByStorageKey.set(storageKey, remaining);
+    } else {
+      locationEnrichmentJobsByStorageKey.delete(storageKey);
+    }
   }
 
   return dictionary;
 }
 
-function isLocationEnrichmentRunning() {
-  return locationEnrichmentJobs > 0;
+function isLocationEnrichmentRunning(storageKey = LOCATION_DICT_STORAGE_KEY) {
+  return (Number(locationEnrichmentJobsByStorageKey.get(storageKey)) || 0) > 0;
 }
 
 function getCountryInfoForPhoto(photo, dictionary) {

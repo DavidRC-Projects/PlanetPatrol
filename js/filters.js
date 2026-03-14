@@ -53,7 +53,10 @@ function maybeEnrichConstituenciesForCountry(photos, dictionary, selectedCountry
   if (!selectedCountryKey) return;
   if (typeof getOrBuildLocationDictionary !== 'function') return;
   if (typeof hasMissingConstituencyForCountry !== 'function') return;
-  if (typeof isLocationEnrichmentRunning === 'function' && isLocationEnrichmentRunning()) return;
+  if (selectedCountryKey !== lastCountryConstituencyEnrichmentKey) {
+    lastCountryConstituencyEnrichmentKey = '';
+  }
+  if (typeof isLocationEnrichmentRunning === 'function' && isLocationEnrichmentRunning(LOCATION_DICT_STORAGE_KEY)) return;
   if (!hasMissingConstituencyForCountry(photos, dictionary, selectedCountryKey)) return;
   if (lastCountryConstituencyEnrichmentKey === selectedCountryKey) return;
 
@@ -186,8 +189,8 @@ function populateConstituencyOptions(photos, dictionary, selectedCountry = '', s
     return '';
   }
   if (labelEl) labelEl.textContent = 'County / location';
-  /* Use photo+dictionary for counties: location-resolutions.json has detail:null;
-   * county data comes from the location dictionary (reverse geocoding). */
+  // Keep county options aligned to the active photo dataset so option keys
+  // always match filterPhotos() constituency keys.
   const constituencies = buildConstituencyCounts(photos, dictionary, selectedCountry);
   el.innerHTML = '<option value="">All counties / locations</option>';
   for (const item of constituencies) {
