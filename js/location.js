@@ -163,6 +163,7 @@ function normalizeConstituencyName(value) {
   if (!raw) return '';
   const lower = raw.toLowerCase();
   if (lower === 'unknown' || lower === 'unknown constituency' || lower === 'n/a') return '';
+  if (lower === 'england' || lower === 'scotland' || lower === 'wales' || lower === 'northern ireland') return '';
   return raw;
 }
 
@@ -347,6 +348,10 @@ function pickConstituencyFromAddress(address, countryCode) {
   const ukConstituent = ['england', 'scotland', 'wales', 'northern ireland'];
   if (cc === 'GB' && county && !ukConstituent.includes(county.toLowerCase())) {
     return county;
+  }
+  if (cc === 'GB') {
+    // For UK, avoid returning broad constituent countries as county values.
+    return cityDistrict || city || '';
   }
   return stateDistrict || county || cityDistrict || city || '';
 }
