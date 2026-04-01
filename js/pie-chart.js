@@ -311,9 +311,84 @@ function downloadPieChartAsImage() {
   const svgEl = getElement(DOM_IDS.pieChartSvg);
   const titleEl = getElement(DOM_IDS.pieChartModalTitle);
   if (!svgEl) return;
+
+  const state = svgEl._pieState;
+  if (!state || !state.slices || !state.slices.length) return;
+
   const title = titleEl?.textContent || 'Chart';
-  downloadSvgAsImage(svgEl, `${title.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}.png`, [
-    '.pie-slice { transition: none; }',
-    'text { font-family: system-ui, -apple-system, sans-serif; }'
-  ]);
+  const slices = state.slices;
+  const scale = 2;
+  const pieSize = 400;
+  const titleH = 50;
+  const legendItemH = 26;
+  const legendPad = 16;
+  const legendCols = 2;
+  const legendRows = Math.ceil(slices.length / legendCols);
+  const legendH = legendRows * legendItemH + legendPad * 2;
+  const canvasW = Math.max(pieSize + 40, 540);
+  const canvasH = titleH + pieSize + legendH + 10;
+
+  const clone = svgEl.cloneNode(true);
+  const styleTag = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+  styleTag.textContent = '.pie-slice { transition: none; }';
+  clone.insertBefore(styleTag, clone.firstChild);
+  clone.setAttribute('width', pieSize);
+  clone.setAttribute('height', pieSize);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  clone.querySelectorAll('.pie-slice').forEach((p) => p.removeAttribute('opacity'));
+
+  const svgBlob = new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvasW * scale;
+    canvas.height = canvasH * scale;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvasW, canvasH);
+
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(title, canvasW / 2, 34);
+
+    ctx.drawImage(img, (canvasW - pieSize) / 2, titleH, pieSize, pieSize);
+    URL.revokeObjectURL(url);
+
+    const legendY = titleH + pieSize + legendPad;
+    const colW = (canvasW - 40) / legendCols;
+    ctx.textAlign = 'left';
+    ctx.font = '13px system-ui, -apple-system, sans-serif';
+
+    for (let i = 0; i < slices.length; i++) {
+      const s = slices[i];
+      const col = i % legendCols;
+      const row = Math.floor(i / legendCols);
+      const x = 20 + col * colW;
+      const y = legendY + row * legendItemH;
+      ctx.fillStyle = s.color;
+      ctx.beginPath();
+      ctx.roundRect(x, y - 10, 13, 13, 2);
+      ctx.fill();
+      ctx.fillStyle = '#1f2937';
+      const pct = Math.round(s.ratio * 100);
+      ctx.fillText(`${s.name}: ${formatPieCount(s.count)} (${pct}%)`, x + 20, y + 1);
+    }
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${title.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(a.href), 100);
+    }, 'image/png');
+  };
+  img.src = url;
 }
