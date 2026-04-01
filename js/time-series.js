@@ -250,7 +250,36 @@ function ensureTimeSeriesInteractivity(svg, tooltip) {
   });
 }
 
-function renderTimeSeriesInto({ svg, emptyEl, tooltip, subtitleEl, points, granularity }) {
+function buildChartFilterDescription(filters, missions) {
+  const parts = [];
+  if (filters?.mission) {
+    const name = typeof getMissionNameByFilterKey === 'function'
+      ? getMissionNameByFilterKey(missions || {}, filters.mission) : '';
+    if (name && name !== 'All missions' && name !== 'Selected mission') parts.push(name);
+  }
+  if (filters?.country) {
+    const el = typeof getElement === 'function' ? getElement(DOM_IDS.filterCountry) : null;
+    if (el) {
+      const opt = el.options[el.selectedIndex];
+      if (opt && opt.value) {
+        const text = opt.text.replace(/^[^\w]*/, '').replace(/\s*\([\d,]+\)\s*$/, '').trim();
+        if (text) parts.push(text);
+      }
+    }
+  }
+  if (filters?.year) parts.push(String(filters.year));
+  if (filters?.month) {
+    const idx = parseInt(filters.month, 10) - 1;
+    if (idx >= 0 && idx < 12) parts.push(monthShortName(idx));
+  }
+  if (filters?.day) parts.push(`Day ${filters.day}`);
+  if (filters?.status === 'moderated') parts.push('Published');
+  else if (filters?.status === 'unmoderated') parts.push('Unpublished');
+  if (filters?.brandLabelSearch) parts.push(`"${filters.brandLabelSearch}"`);
+  return parts.length ? `Litter collected \u2013 ${parts.join(' \u00b7 ')}` : 'Litter collected over time';
+}
+
+function renderTimeSeriesInto({ svg, emptyEl, tooltip, subtitleEl, points, granularity, chartTitle }) {
   if (!svg) return;
   ensureTimeSeriesInteractivity(svg, tooltip);
   if (!points.length) {
@@ -271,8 +300,8 @@ function renderTimeSeriesInto({ svg, emptyEl, tooltip, subtitleEl, points, granu
   svg.setAttribute('aria-label', `Collected over time (grouped by ${bucketLabel}).`);
 
   const W = 900;
-  const H = 280;
-  const pad = { l: 52, r: 16, t: 16, b: 40 };
+  const H = 340;
+  const pad = { l: 72, r: 16, t: 48, b: 56 };
   const plotW = W - pad.l - pad.r;
   const plotH = H - pad.t - pad.b;
 
@@ -332,8 +361,16 @@ function renderTimeSeriesInto({ svg, emptyEl, tooltip, subtitleEl, points, granu
     ? `<circle class="ts-point ts-point--latest" cx="${latest.x}" cy="${latest.y}" r="4.2"></circle>`
     : '';
 
+  const xAxisLabel = granularity === 'day' ? 'Day' : granularity === 'month' ? 'Month' : 'Year';
+  const titleSvg = chartTitle
+    ? `<text class="ts-chart-title" x="${W / 2}" y="28" text-anchor="middle">${escapeHtml(chartTitle)}</text>`
+    : '';
+  const yAxisTitleY = pad.t + plotH / 2;
+  const yAxisTitle = `<text class="ts-axis-title" x="18" y="${yAxisTitleY}" text-anchor="middle" transform="rotate(-90, 18, ${yAxisTitleY})">Pieces</text>`;
+  const xAxisTitle = `<text class="ts-axis-title" x="${pad.l + plotW / 2}" y="${H - 8}" text-anchor="middle">${escapeHtml(xAxisLabel)}</text>`;
+
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  svg._tsState = { W, H, pad, points: xy };
+  svg._tsState = { W, H, pad, points: xy, chartTitle };
   svg.innerHTML = `
     <defs>
       <linearGradient id="tsGradient" x1="0" y1="0" x2="0" y2="1">
@@ -342,6 +379,9 @@ function renderTimeSeriesInto({ svg, emptyEl, tooltip, subtitleEl, points, granu
       </linearGradient>
     </defs>
     <rect class="ts-bg" x="0" y="0" width="${W}" height="${H}" rx="12" ry="12"></rect>
+    ${titleSvg}
+    ${yAxisTitle}
+    ${xAxisTitle}
     ${gridLines}
     ${yLabels}
     <path class="ts-area" d="${areaPath}"></path>
@@ -353,7 +393,7 @@ function renderTimeSeriesInto({ svg, emptyEl, tooltip, subtitleEl, points, granu
   `.trim();
 }
 
-function renderTimeSeries(filtered, filters) {
+function renderTimeSeries(filtered, filters, missions) {
   const subtitleEl = getElement(DOM_IDS.timeSeriesSubtitle);
   const primarySvg = getElement(DOM_IDS.timeSeriesChart);
   const primaryEmptyEl = getElement(DOM_IDS.timeSeriesEmpty);
@@ -364,13 +404,19 @@ function renderTimeSeries(filtered, filters) {
 
   if (!primarySvg) return;
   const { granularity, points } = buildTimeSeriesPoints(filtered, filters);
+  const chartTitle = buildChartFilterDescription(filters, missions);
+
+  const modalTitleEl = getElement(DOM_IDS.timeSeriesModalTitle);
+  if (modalTitleEl) modalTitleEl.textContent = chartTitle;
+
   renderTimeSeriesInto({
     svg: primarySvg,
     emptyEl: primaryEmptyEl,
     tooltip: primaryTooltip,
     subtitleEl,
     points,
-    granularity
+    granularity,
+    chartTitle
   });
   renderTimeSeriesInto({
     svg: modalSvg,
@@ -378,7 +424,8 @@ function renderTimeSeries(filtered, filters) {
     tooltip: modalTooltip,
     subtitleEl: null,
     points,
-    granularity
+    granularity,
+    chartTitle
   });
 }
 
@@ -422,4 +469,74 @@ function bindTimeSeriesModal() {
   });
 
   modal.dataset.bound = '1';
+}
+
+function downloadSvgAsImage(svgElement, filename, extraStyles) {
+  if (!svgElement) return;
+  const clone = svgElement.cloneNode(true);
+
+  const viewBox = svgElement.viewBox?.baseVal;
+  const w = viewBox?.width || svgElement.clientWidth || 900;
+  const h = viewBox?.height || svgElement.clientHeight || 340;
+
+  const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+  styleEl.textContent = [
+    '.ts-bg { fill: #ffffff; }',
+    '.ts-grid { stroke: #e5e7eb; stroke-width: 1; }',
+    '.ts-axis { fill: #6b7280; font-size: 12px; font-family: system-ui, -apple-system, sans-serif; }',
+    '.ts-axis-title { fill: #374151; font-size: 13px; font-weight: 600; font-family: system-ui, -apple-system, sans-serif; }',
+    '.ts-chart-title { fill: #1f2937; font-size: 16px; font-weight: 700; font-family: system-ui, -apple-system, sans-serif; }',
+    '.ts-area { fill: url(#tsGradient); }',
+    '.ts-line { fill: none; stroke: #0ea5e9; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }',
+    '.ts-point { fill: #0f766e; stroke: white; stroke-width: 2; }',
+    '.ts-point--latest { fill: #0ea5e9; }',
+    ...(extraStyles || [])
+  ].join('\n');
+  clone.insertBefore(styleEl, clone.firstChild);
+
+  const hoverLine = clone.querySelector('.ts-hover-line');
+  const hoverPoint = clone.querySelector('.ts-hover-point');
+  if (hoverLine) hoverLine.remove();
+  if (hoverPoint) hoverPoint.remove();
+
+  clone.setAttribute('width', w);
+  clone.setAttribute('height', h);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+  const serializer = new XMLSerializer();
+  const svgBlob = new Blob([serializer.serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  const img = new Image();
+  img.onload = () => {
+    const scale = 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = w * scale;
+    canvas.height = h * scale;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(url);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename || 'chart.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(a.href), 100);
+    }, 'image/png');
+  };
+  img.src = url;
+}
+
+function downloadTimeSeriesChart() {
+  const svgEl = getElement(DOM_IDS.timeSeriesChartModal) || getElement(DOM_IDS.timeSeriesChart);
+  if (!svgEl) return;
+  const title = svgEl._tsState?.chartTitle || 'litter-trend';
+  const safeName = title.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+  downloadSvgAsImage(svgEl, `${safeName}.png`);
 }

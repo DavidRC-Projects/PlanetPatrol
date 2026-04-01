@@ -150,7 +150,7 @@
             </div>
             <p id="timeSeriesSubtitle" class="muted hidden" hidden></p>
             <div class="chart-wrap">
-              <svg id="timeSeriesChart" class="time-series time-series--interactive" viewBox="0 0 900 280" preserveAspectRatio="xMinYMin meet" role="button" tabindex="0" aria-label="Open larger litter trend chart"></svg>
+              <svg id="timeSeriesChart" class="time-series time-series--interactive" viewBox="0 0 900 340" preserveAspectRatio="xMinYMin meet" role="button" tabindex="0" aria-label="Open larger litter trend chart"></svg>
               <div id="timeSeriesTooltip" class="ts-tooltip hidden" hidden></div>
             </div>
             <p id="timeSeriesEmpty" class="muted hidden" hidden>No data for current filters.</p>
@@ -233,9 +233,12 @@
   <div id="timeSeriesModal" class="ts-modal hidden" hidden aria-hidden="true">
     <div class="ts-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="timeSeriesModalTitle">
       <button id="timeSeriesModalClose" class="ts-modal-close" type="button" aria-label="Close large chart">×</button>
-      <h2 id="timeSeriesModalTitle">Litter trend over time</h2>
+      <div class="ts-modal-header-row">
+        <h2 id="timeSeriesModalTitle">Litter trend over time</h2>
+        <button id="timeSeriesDownload" class="chart-download-btn" type="button" aria-label="Download chart as image">⬇ Download</button>
+      </div>
       <div class="chart-wrap chart-wrap--modal">
-        <svg id="timeSeriesChartModal" class="time-series time-series--modal" viewBox="0 0 900 280" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Large litter trend chart"></svg>
+        <svg id="timeSeriesChartModal" class="time-series time-series--modal" viewBox="0 0 900 340" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Large litter trend chart"></svg>
         <div id="timeSeriesTooltipModal" class="ts-tooltip hidden" hidden></div>
       </div>
       <p id="timeSeriesEmptyModal" class="muted hidden" hidden>No data for current filters.</p>
@@ -245,7 +248,10 @@
   <div id="pieChartModal" class="ts-modal hidden" hidden aria-hidden="true">
     <div class="ts-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="pieChartModalTitle">
       <button id="pieChartModalClose" class="ts-modal-close" type="button" aria-label="Close pie chart">×</button>
-      <h2 id="pieChartModalTitle">Brands distribution</h2>
+      <div class="ts-modal-header-row">
+        <h2 id="pieChartModalTitle">Brands distribution</h2>
+        <button id="pieChartDownload" class="chart-download-btn" type="button" aria-label="Download chart as image">⬇ Download</button>
+      </div>
       <div class="chart-wrap pie-chart-wrap">
         <svg id="pieChartSvg" class="pie-chart-svg" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Pie chart"></svg>
       </div>

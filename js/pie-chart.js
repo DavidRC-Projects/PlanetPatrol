@@ -4,21 +4,21 @@
  */
 
 const PIE_CHART_COLORS = [
-  '#0f766e',
-  '#15803d',
   '#0ea5e9',
+  '#f97316',
+  '#10b981',
+  '#ef4444',
+  '#8b5cf6',
+  '#f59e0b',
+  '#06b6d4',
+  '#ec4899',
+  '#14b8a6',
+  '#6366f1',
+  '#84cc16',
+  '#d946ef',
   '#0284c7',
-  '#0d9488',
+  '#78716c',
   '#059669',
-  '#2563eb',
-  '#0891b2',
-  '#1d4ed8',
-  '#047857',
-  '#0369a1',
-  '#0c4a6e',
-  '#164e63',
-  '#1e40af',
-  '#14532d',
   '#64748b'
 ];
 
@@ -179,7 +179,7 @@ function ensurePieChartInteractivity(svg, tooltipEl) {
     const dx = svgX - cx;
     const dy = svgY - cy;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx) + Math.PI / 2;
+    const angle = Math.atan2(dy, dx);
     const normalizedAngle = angle < 0 ? angle + 2 * Math.PI : angle;
 
     const rMax = (viewBox.width / 2) * 0.85;
@@ -305,4 +305,15 @@ function bindPieChartModals() {
   });
 
   modal.dataset.bound = '1';
+}
+
+function downloadPieChartAsImage() {
+  const svgEl = getElement(DOM_IDS.pieChartSvg);
+  const titleEl = getElement(DOM_IDS.pieChartModalTitle);
+  if (!svgEl) return;
+  const title = titleEl?.textContent || 'Chart';
+  downloadSvgAsImage(svgEl, `${title.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}.png`, [
+    '.pie-slice { transition: none; }',
+    'text { font-family: system-ui, -apple-system, sans-serif; }'
+  ]);
 }

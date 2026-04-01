@@ -479,7 +479,7 @@ function bindRecordDetailModal() {
 /** Renders all filtered dashboard sections. */
 async function renderFilteredView(filtered, filters, missions, allPhotos) {
   renderCards(filtered);
-  renderTimeSeries(filtered, filters);
+  renderTimeSeries(filtered, filters, missions);
   renderMissionLeaderboard(missions, allPhotos || filtered);
   renderMissionPartnerSnapshot(filtered, filters, missions);
   renderTopCollections(filtered);

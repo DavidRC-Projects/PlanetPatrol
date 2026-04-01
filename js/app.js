@@ -100,6 +100,17 @@ async function loadData() {
   }
 }
 
+function bindChartDownloadButtons() {
+  const tsBtn = getElement(DOM_IDS.timeSeriesDownload);
+  if (tsBtn) tsBtn.addEventListener('click', () => {
+    if (typeof downloadTimeSeriesChart === 'function') downloadTimeSeriesChart();
+  });
+  const pieBtn = getElement(DOM_IDS.pieChartDownload);
+  if (pieBtn) pieBtn.addEventListener('click', () => {
+    if (typeof downloadPieChartAsImage === 'function') downloadPieChartAsImage();
+  });
+}
+
 function init() {
   const required = [DOM_IDS.loading, DOM_IDS.dashboard, DOM_IDS.error];
   if (!hasRequiredElements(required)) return;
@@ -113,6 +124,7 @@ function init() {
   bindTopBrandsLabelsModal();
   bindFieldReportCardsToModals();
   bindRecordDetailModal();
+  bindChartDownloadButtons();
 
   const retryEl = getElement(DOM_IDS.errorRetry);
   if (retryEl) retryEl.addEventListener('click', () => void loadData());
