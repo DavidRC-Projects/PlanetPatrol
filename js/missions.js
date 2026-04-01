@@ -104,6 +104,18 @@ function buildMissionFilterOptions(photos, missions) {
   missions = missions || {};
   const totals = new Map();
 
+  for (const id of Object.keys(missions)) {
+    const mission = missions[id];
+    if (!mission || isMissionHidden(mission)) continue;
+    const rawName = String(mission?.name || '').trim();
+    const key = missionGroupKey(rawName);
+    const pieces = getMissionPieces(mission);
+    const displayName = key === 'sky care' ? 'Sky Care' : (rawName || 'Unnamed mission');
+    const current = totals.get(key) || { key, name: displayName, missionPieces: 0, photoPieces: 0, photos: 0 };
+    current.missionPieces += pieces;
+    totals.set(key, current);
+  }
+
   for (const id of Object.keys(photos)) {
     const photo = photos[id];
     const missionIds = getPhotoMissionIds(photo);
@@ -114,14 +126,21 @@ function buildMissionFilterOptions(photos, missions) {
       const meta = getMissionFilterMeta(missionId, missions);
       if (seen.has(meta.key)) continue;
       seen.add(meta.key);
-      const current = totals.get(meta.key) || { key: meta.key, name: meta.name, pieces: 0, photos: 0 };
-      current.pieces += pieces;
+      const current = totals.get(meta.key) || { key: meta.key, name: meta.name, missionPieces: 0, photoPieces: 0, photos: 0 };
+      current.photoPieces += pieces;
       current.photos += 1;
       totals.set(meta.key, current);
     }
   }
 
   return [...totals.values()]
+    .map((item) => ({
+      key: item.key,
+      name: item.name,
+      pieces: item.missionPieces > 0 ? item.missionPieces : item.photoPieces,
+      photos: item.photos
+    }))
+    .filter((item) => item.pieces > 0 || item.photos > 0)
     .sort((a, b) => b.pieces - a.pieces || a.name.localeCompare(b.name));
 }
 
