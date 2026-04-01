@@ -214,6 +214,33 @@ function ensurePieChartInteractivity(svg, tooltipEl) {
   });
 }
 
+function buildPieChartTitle(type) {
+  const base = type === 'brand' ? 'Brands distribution' : 'Labels distribution';
+  if (typeof getFilterValues !== 'function') return base;
+  const filters = getFilterValues();
+  if (!filters) return base;
+  const parts = [];
+  if (filters.mission && typeof getMissionNameByFilterKey === 'function') {
+    const missions = (typeof appState !== 'undefined' && appState?.missions) || {};
+    const name = getMissionNameByFilterKey(missions, filters.mission);
+    if (name && name !== 'All missions' && name !== 'Selected mission') parts.push(name);
+  }
+  if (filters.country) {
+    const el = getElement(DOM_IDS.filterCountry);
+    if (el) {
+      const opt = el.options[el.selectedIndex];
+      if (opt && opt.value) {
+        const text = opt.text.replace(/^[^\w]*/, '').replace(/\s*\([\d,]+\)\s*$/, '').trim();
+        if (text) parts.push(text);
+      }
+    }
+  }
+  if (filters.year) parts.push(String(filters.year));
+  if (filters.status === 'moderated') parts.push('Published');
+  else if (filters.status === 'unmoderated') parts.push('Unpublished');
+  return parts.length ? `${base} \u2013 ${parts.join(' \u00b7 ')}` : base;
+}
+
 /** Opens the pie chart modal with brands or labels data. */
 function openPieChartModal(type) {
   const modal = getElement(DOM_IDS.pieChartModal);
@@ -225,8 +252,7 @@ function openPieChartModal(type) {
 
   if (!modal || !titleEl || !svgEl || !emptyEl) return;
 
-  const isBrand = type === 'brand';
-  titleEl.textContent = isBrand ? 'Brands distribution' : 'Labels distribution';
+  titleEl.textContent = buildPieChartTitle(type);
 
   const filtered = (typeof appState !== 'undefined' && appState?.filteredPhotos) || {};
   const allItems = topCategoryTotals(filtered, type, 100);
