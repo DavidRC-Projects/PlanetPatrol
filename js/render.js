@@ -107,10 +107,12 @@ function renderTopCollections(filtered) {
   /* Top 50 brands/labels now rendered in modal on open */
 }
 
-function renderMissionLeaderboard(missions, photos) {
+function renderMissionLeaderboard(missions, photos, filters) {
   const tableEl = getElement(DOM_IDS.topMissionsList);
   if (!tableEl) return;
-  const items = topMissionTotals(missions, photos, 20);
+  const useScopedCounts =
+    typeof hasActivePhotoFilters === 'function' && hasActivePhotoFilters(filters);
+  const items = topMissionTotals(missions, photos, 20, { useScopedCounts });
   tableEl.innerHTML = buildMissionTableRows(items);
 
   const summaryEl = getElement(DOM_IDS.topMissionsSummary);
@@ -480,7 +482,7 @@ function bindRecordDetailModal() {
 async function renderFilteredView(filtered, filters, missions, allPhotos) {
   renderCards(filtered);
   renderTimeSeries(filtered, filters, missions);
-  renderMissionLeaderboard(missions, allPhotos || filtered);
+  renderMissionLeaderboard(missions, filtered, filters);
   renderMissionPartnerSnapshot(filtered, filters, missions);
   renderTopCollections(filtered);
   renderRecordGalleries();

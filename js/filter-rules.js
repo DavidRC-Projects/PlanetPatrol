@@ -48,3 +48,18 @@ function passesBrandLabelFilter(photo, searchTerm) {
     categoryMatchesBrandLabelSearch(category, normalizedTerm)
   );
 }
+
+/** True when any dashboard filter narrows the photo set from “all missions, all locations, all time”. */
+function hasActivePhotoFilters(values) {
+  if (!values) return false;
+  return !!(
+    values.mission ||
+    values.country ||
+    values.constituency ||
+    values.year ||
+    values.month ||
+    values.day ||
+    (values.status && values.status !== 'all') ||
+    String(values.brandLabelSearch || '').trim()
+  );
+}

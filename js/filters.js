@@ -29,7 +29,8 @@ function filterPhotos(photos, locationDictionary, missions, country, constituenc
       categoryMatchesBrandLabelSearch(category, normalizedBrandLabelSearch)
     );
     if (!matchingCategories.length) continue;
-    out[id] = { ...photo, categories: matchingCategories };
+    const scopedPieces = matchingCategories.reduce((sum, c) => sum + getCategoryCount(c), 0);
+    out[id] = { ...photo, categories: matchingCategories, pieces: scopedPieces };
   }
   return out;
 }

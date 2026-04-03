@@ -32,10 +32,11 @@ function isMissionHidden(mission) {
 }
 
 /** Returns [{ name, count }] for top missions by pieces, grouped by mission name. */
-function topMissionTotals(missions, photos, limit = 20) {
+function topMissionTotals(missions, photos, limit = 20, options = {}) {
+  const useScopedCounts = options.useScopedCounts === true;
   missions = missions || {};
   photos = photos || {};
-  const byName = new Map(); // normalizedName -> { name, count, missionPieces, photoPieces }
+  const byName = new Map(); // normalizedName -> { name, missionPieces, photoPieces }
 
   for (const id of Object.keys(missions)) {
     const mission = missions[id];
@@ -75,7 +76,10 @@ function topMissionTotals(missions, photos, limit = 20) {
   }
 
   return [...byName.values()]
-    .map((row) => ({ name: row.name, count: row.missionPieces > 0 ? row.missionPieces : row.photoPieces }))
+    .map((row) => ({
+      name: row.name,
+      count: useScopedCounts ? row.photoPieces : row.missionPieces > 0 ? row.missionPieces : row.photoPieces
+    }))
     .filter((row) => row.count > 0)
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
     .slice(0, Math.max(0, limit | 0));
