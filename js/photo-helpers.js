@@ -1,6 +1,11 @@
-/** Returns total pieces from photo object (handles missing pieces). */
+/** Returns total pieces from photo object, falling back to category counts. */
 function getPieces(photo) {
-  return Math.max(0, Number(photo?.pieces) || 0);
+  const pieces = Number(photo?.pieces);
+  if (Number.isFinite(pieces) && pieces > 0) return pieces;
+
+  const categories = getPhotoCategories(photo);
+  if (!categories.length) return Math.max(0, Number.isFinite(pieces) ? pieces : 0);
+  return categories.reduce((sum, category) => sum + getCategoryCount(category), 0);
 }
 
 /** Returns true if photo is moderated. Uses published flag when available. */
