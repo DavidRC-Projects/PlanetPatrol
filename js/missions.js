@@ -31,6 +31,11 @@ function isMissionHidden(mission) {
   return mission?.hidden === true;
 }
 
+function clampMissionDisplayPieces(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
+}
+
 /** Returns [{ name, count }] for top missions by pieces, grouped by mission name. */
 function topMissionTotals(missions, photos, limit = 20, options = {}) {
   const useScopedCounts = options.useScopedCounts === true;
@@ -78,7 +83,9 @@ function topMissionTotals(missions, photos, limit = 20, options = {}) {
   return [...byName.values()]
     .map((row) => ({
       name: row.name,
-      count: useScopedCounts ? row.photoPieces : row.missionPieces > 0 ? row.missionPieces : row.photoPieces
+      count: clampMissionDisplayPieces(
+        useScopedCounts ? row.photoPieces : row.missionPieces > 0 ? row.missionPieces : row.photoPieces
+      )
     }))
     .filter((row) => row.count > 0)
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
@@ -141,7 +148,7 @@ function buildMissionFilterOptions(photos, missions) {
     .map((item) => ({
       key: item.key,
       name: item.name,
-      pieces: item.missionPieces > 0 ? item.missionPieces : item.photoPieces,
+      pieces: clampMissionDisplayPieces(item.missionPieces > 0 ? item.missionPieces : item.photoPieces),
       photos: item.photos
     }))
     .filter((item) => item.pieces > 0 || item.photos > 0)
