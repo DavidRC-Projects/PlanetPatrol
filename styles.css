@@ -290,6 +290,17 @@ body {
   align-items: center;
 }
 
+.filter-reset-wrap {
+  margin-left: auto;
+  display: flex;
+  align-items: flex-end;
+}
+
+.filter-reset-btn {
+  min-height: 38px;
+  padding: 0.45rem 1rem;
+}
+
 .filters label { font-size: 0.9rem; }
 
 .filters select {

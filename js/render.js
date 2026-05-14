@@ -133,12 +133,12 @@ function renderMissionPartnerSnapshot(filtered, filters, missions) {
   const contextLabel = missionName || 'all missions';
   if (openBtn) {
     openBtn.textContent = missionName
-      ? `View top 10 brands and labels for ${missionName}`
-      : 'View top 10 brands and labels for all missions';
+      ? `View top 10 brands and product types for ${missionName}`
+      : 'View top 10 brands and product types for all missions';
   }
-  if (modalTitleEl) modalTitleEl.textContent = `Top brands and labels for ${contextLabel}`;
+  if (modalTitleEl) modalTitleEl.textContent = `Top brands and product types for ${contextLabel}`;
   if (brandsTitleEl) brandsTitleEl.textContent = `Top 10 brands for ${contextLabel}`;
-  if (labelsTitleEl) labelsTitleEl.textContent = `Top 10 labels for ${contextLabel}`;
+  if (labelsTitleEl) labelsTitleEl.textContent = `Top 10 product types for ${contextLabel}`;
 
   brandEl.innerHTML = buildTopListItems(topCategoryTotals(filtered, 'brand', 10));
   labelEl.innerHTML = buildTopListItems(topCategoryTotals(filtered, 'label', 10));
@@ -166,7 +166,7 @@ function bindTopBrandsLabelsModal() {
     const filtered = typeof appState !== 'undefined' && appState ? appState.filteredPhotos : {};
     const isBrand = type === 'brand';
     const items = topCategoryTotals(filtered, type, 50);
-    titleEl.textContent = isBrand ? 'Top 50 Brands' : 'Top 50 Labels';
+    titleEl.textContent = isBrand ? 'Top 50 Brands' : 'Top 50 product types';
     listEl.innerHTML = buildTopListItems(items);
     lastFocused = document.activeElement;
     modal.hidden = false;

@@ -33,6 +33,37 @@ function showError(message) {
   setViewState({ loading: 'none', dashboard: 'none', error: 'block', errorMessage: message });
 }
 
+function bindFilterReset() {
+  const btn = getElement(DOM_IDS.filterReset);
+  if (!btn || btn.dataset.bound === '1') return;
+  btn.addEventListener('click', () => {
+    if (typeof resetCountryConstituencyEnrichmentState === 'function') resetCountryConstituencyEnrichmentState();
+
+    const setVal = (id, value) => {
+      const el = getElement(id);
+      if (el) el.value = value;
+    };
+
+    setVal(DOM_IDS.filterMission, '');
+    setVal(DOM_IDS.filterStatus, 'all');
+    setVal(DOM_IDS.filterYear, '');
+    setVal(DOM_IDS.filterMonth, '');
+    setVal(DOM_IDS.filterDay, '');
+    setVal(DOM_IDS.filterCountry, '');
+    setVal(DOM_IDS.filterConstituency, '');
+    setVal(DOM_IDS.filterBrandLabelSearch, '');
+
+    const water = getElement(DOM_IDS.filterWaterTestType);
+    if (water) {
+      water.value = '';
+      water.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    void applyFilters(appState.photos, appState.locationDictionary, appState.missions);
+  });
+  btn.dataset.bound = '1';
+}
+
 function bindFilterAutoRefresh() {
   const ids = [
     DOM_IDS.filterMission,
@@ -118,6 +149,7 @@ function init() {
   bindWaterTestFilters();
   bindHeatMapModal();
   bindFilterAutoRefresh();
+  bindFilterReset();
   bindTimeSeriesModal();
   bindPieChartModals();
   bindMissionPartnerModal();

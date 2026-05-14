@@ -37,6 +37,10 @@ function filterPhotos(photos, locationDictionary, missions, country, constituenc
 
 let lastCountryConstituencyEnrichmentKey = '';
 
+function resetCountryConstituencyEnrichmentState() {
+  lastCountryConstituencyEnrichmentKey = '';
+}
+
 function getPhotosForCountry(photos, dictionary, selectedCountryKey) {
   photos = photos || {};
   const out = {};

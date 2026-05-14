@@ -32,6 +32,7 @@ const DOM_IDS = {
   filterConstituency: 'filterConstituency',
   filterConstituencyLabel: 'filterConstituencyLabel',
   filterBrandLabelSearch: 'filterBrandLabelSearch',
+  filterReset: 'filterReset',
   pieChartBrandsBtn: 'pieChartBrandsBtn',
   pieChartLabelsBtn: 'pieChartLabelsBtn',
   pieChartModal: 'pieChartModal',

@@ -215,7 +215,7 @@ function ensurePieChartInteractivity(svg, tooltipEl) {
 }
 
 function buildPieChartTitle(type) {
-  const base = type === 'brand' ? 'Brands distribution' : 'Labels distribution';
+  const base = type === 'brand' ? 'Brands distribution' : 'Product types distribution';
   if (typeof getFilterValues !== 'function') return base;
   const filters = getFilterValues();
   if (!filters) return base;

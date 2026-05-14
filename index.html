@@ -83,25 +83,28 @@
         <label class="filter-field"><span class="filter-label">Year</span><select id="filterYear"><option value="">All</option></select></label>
         <label class="filter-field"><span class="filter-label">Month (selected year)</span><select id="filterMonth"><option value="">All</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select></label>
         <label class="filter-field"><span class="filter-label">Day of month</span><select id="filterDay"><option value="">All</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></label>
-        <label class="filter-field"><span class="filter-label">Brand / label</span><input id="filterBrandLabelSearch" type="text" placeholder="Type exact brand or label" autocomplete="off"></label>
+        <label class="filter-field"><span class="filter-label">Brand / product type</span><input id="filterBrandLabelSearch" type="text" placeholder="Type exact brand or product type" autocomplete="off"></label>
+        <div class="filter-reset-wrap">
+          <button id="filterReset" type="button" class="filter-reset-btn">Reset filters</button>
+        </div>
       </section>
 
       <div class="insights-layout" id="insights">
         <div class="pie-leaderboard-row">
           <section class="panel pie-chart-panel" id="pieChartPanel">
             <div class="pie-chart-panel-header">
-              <h2 class="insight-heading">Brands & Labels</h2>
+              <h2 class="insight-heading">Brands & product types</h2>
             </div>
             <div class="pie-chart-panel-buttons">
               <div class="pie-chart-panel-group">
                 <span class="pie-chart-panel-label">Pie charts</span>
                 <button id="pieChartBrandsBtn" type="button" class="pie-chart-card-btn">Brands</button>
-                <button id="pieChartLabelsBtn" type="button" class="pie-chart-card-btn">Labels</button>
+                <button id="pieChartLabelsBtn" type="button" class="pie-chart-card-btn">Product types</button>
               </div>
               <div class="pie-chart-panel-group">
                 <span class="pie-chart-panel-label">Top 50</span>
                 <button id="topBrandsOpen" type="button" class="pie-chart-card-btn pie-chart-card-btn--top50">Top 50 Brands</button>
-                <button id="topLabelsOpen" type="button" class="pie-chart-card-btn pie-chart-card-btn--top50">Top 50 Labels</button>
+                <button id="topLabelsOpen" type="button" class="pie-chart-card-btn pie-chart-card-btn--top50">Top 50 product types</button>
               </div>
             </div>
           </section>
@@ -113,7 +116,7 @@
                   <span class="leaderboard-title">Mission leaderboard</span>
                   <span class="leaderboard-hint">litter pieces collected</span>
                 </span>
-                <button id="missionPartnerOpen" class="link-button leaderboard-summary-action" type="button">View top 5 brands and labels</button>
+                <button id="missionPartnerOpen" class="link-button leaderboard-summary-action" type="button">View top 5 brands and product types</button>
                 <span id="topMissionsSummary" class="leaderboard-podium" aria-label="Top 3 missions preview"></span>
               </summary>
 
@@ -273,14 +276,14 @@
   <div id="missionPartnerModal" class="ts-modal hidden" hidden aria-hidden="true">
     <div class="ts-modal-dialog mission-partner-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="missionPartnerModalTitle">
       <button id="missionPartnerModalClose" class="ts-modal-close" type="button" aria-label="Close mission partner snapshot">×</button>
-      <h2 id="missionPartnerModalTitle">Top brands and labels for all missions</h2>
+      <h2 id="missionPartnerModalTitle">Top brands and product types for all missions</h2>
       <div class="mission-partner-lists">
         <section>
           <h3 id="missionPartnerTopBrandsTitle">Top 5 brands</h3>
           <ol id="missionPartnerTopBrands" class="rank-list"></ol>
         </section>
         <section>
-          <h3 id="missionPartnerTopLabelsTitle">Top 5 labels</h3>
+          <h3 id="missionPartnerTopLabelsTitle">Top 5 product types</h3>
           <ol id="missionPartnerTopLabels" class="rank-list"></ol>
         </section>
       </div>
