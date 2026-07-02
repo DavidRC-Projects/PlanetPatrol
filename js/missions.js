@@ -28,6 +28,38 @@ function clampMissionDisplayPieces(value) {
   return Number.isFinite(n) ? Math.max(0, n) : 0;
 }
 
+function formatMissionCount(value) {
+  const n = Number(value) || 0;
+  try {
+    return n.toLocaleString();
+  } catch (_) {
+    return String(n);
+  }
+}
+
+/** When several missions share a name, append the official count so each is distinct. */
+function disambiguateMissionDisplayNames(items) {
+  const rows = (items || []).map((item) => ({ ...item }));
+  const countsByName = new Map();
+  for (const item of rows) {
+    const key = normalizeMissionName(item.name);
+    countsByName.set(key, (countsByName.get(key) || 0) + 1);
+  }
+  return rows.map((item) => {
+    const key = normalizeMissionName(item.name);
+    const pieces = item.pieces ?? item.count ?? 0;
+    const qualifiedName = `${item.name} (${formatMissionCount(pieces)})`;
+    if ((countsByName.get(key) || 0) <= 1) {
+      return { ...item, optionLabel: qualifiedName };
+    }
+    return {
+      ...item,
+      name: qualifiedName,
+      optionLabel: qualifiedName
+    };
+  });
+}
+
 function getPhotoMissionIds(photo) {
   if (!Array.isArray(photo?.missions)) return [];
   return photo.missions
@@ -82,16 +114,18 @@ function topMissionTotals(missions, photos, limit = 20, options = {}) {
     }
   }
 
-  return [...byId.values()]
-    .map((row) => ({
-      name: row.name,
-      count: clampMissionDisplayPieces(
-        useScopedCounts ? row.photoPieces : row.missionPieces > 0 ? row.missionPieces : row.photoPieces
-      )
-    }))
-    .filter((row) => row.count > 0)
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
-    .slice(0, Math.max(0, limit | 0));
+  return disambiguateMissionDisplayNames(
+    [...byId.values()]
+      .map((row) => ({
+        name: row.name,
+        count: clampMissionDisplayPieces(
+          useScopedCounts ? row.photoPieces : row.missionPieces > 0 ? row.missionPieces : row.photoPieces
+        )
+      }))
+      .filter((row) => row.count > 0)
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+      .slice(0, Math.max(0, limit | 0))
+  );
 }
 
 function buildMissionFilterOptions(photos, missions) {
@@ -142,15 +176,17 @@ function buildMissionFilterOptions(photos, missions) {
     }
   }
 
-  return [...totals.values()]
-    .map((item) => ({
-      key: item.key,
-      name: item.name,
-      pieces: clampMissionDisplayPieces(item.missionPieces > 0 ? item.missionPieces : item.photoPieces),
-      photos: item.photos
-    }))
-    .filter((item) => item.pieces > 0 || item.photos > 0)
-    .sort((a, b) => b.pieces - a.pieces || a.name.localeCompare(b.name));
+  return disambiguateMissionDisplayNames(
+    [...totals.values()]
+      .map((item) => ({
+        key: item.key,
+        name: item.name,
+        pieces: clampMissionDisplayPieces(item.missionPieces > 0 ? item.missionPieces : item.photoPieces),
+        photos: item.photos
+      }))
+      .filter((item) => item.pieces > 0 || item.photos > 0)
+      .sort((a, b) => b.pieces - a.pieces || a.name.localeCompare(b.name))
+  );
 }
 
 function photoMatchesMissionKey(photo, selectedMissionKey, missions) {
@@ -165,7 +201,8 @@ function photoMatchesMissionKey(photo, selectedMissionKey, missions) {
 
 function getMissionNameByFilterKey(missions, selectedMissionKey) {
   if (!selectedMissionKey) return 'All missions';
-  const meta = buildMissionFilterOptions({}, missions).find((item) => item.key === selectedMissionKey);
+  const meta = disambiguateMissionDisplayNames(buildMissionFilterOptions({}, missions))
+    .find((item) => item.key === selectedMissionKey);
   if (meta?.name) return meta.name;
   return getMissionFilterMeta(selectedMissionKey, missions).name || 'Selected mission';
 }

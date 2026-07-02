@@ -115,7 +115,8 @@ function populateMissionOptions(photos, missions, selectedMission = '') {
   const options = buildMissionFilterOptions(photos, missions);
   el.innerHTML = '<option value="">All missions</option>';
   for (const item of options) {
-    el.appendChild(new Option(`${item.name} (${formatCount(item.pieces)})`, item.key));
+    const label = item.optionLabel || `${item.name} (${formatCount(item.pieces)})`;
+    el.appendChild(new Option(label, item.key));
   }
   const stillValid = options.some((item) => item.key === selectedMission);
   el.value = stillValid ? selectedMission : '';

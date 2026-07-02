@@ -76,3 +76,16 @@ test('category and time-series counts scale to official mission total', () => {
   );
   assert.equal(points.reduce((sum, row) => sum + row.pieces, 0), 100);
 });
+
+test('duplicate mission names are disambiguated with official counts', () => {
+  const ctx = loadMissions();
+  const missions = {
+    a: { name: 'The Big Jet2 Clean Up', totalPieces: 6054, hidden: false },
+    b: { name: 'The Big Jet2 Clean Up', totalPieces: 5757, hidden: false }
+  };
+  const options = ctx.buildMissionFilterOptions({}, missions);
+  assert.equal(options.length, 2);
+  const names = options.map((item) => item.name).join(' | ');
+  assert.match(names, /5,?757/);
+  assert.match(names, /6,?054/);
+});
