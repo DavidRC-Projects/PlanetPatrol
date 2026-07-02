@@ -290,15 +290,9 @@ body {
   align-items: center;
 }
 
-.filter-reset-wrap {
-  margin-left: auto;
-  display: flex;
-  align-items: flex-end;
-}
-
-.filter-reset-btn {
-  min-height: 38px;
-  padding: 0.45rem 1rem;
+.filter-field--mission-and-reset .filter-reset-btn {
+  justify-self: start;
+  margin-top: 0.35rem;
 }
 
 .filters label { font-size: 0.9rem; }

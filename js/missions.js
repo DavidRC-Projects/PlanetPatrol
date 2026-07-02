@@ -7,14 +7,6 @@ function normalizeMissionName(value) {
     .toLowerCase();
 }
 
-function missionGroupKey(rawName) {
-  const normalized = normalizeMissionName(rawName);
-  // Amalgamate Sky Care missions across different years/variants.
-  // Examples seen: "Sky Care 2022", "Sky Care Mission 2024", "Sky Care 2023", etc.
-  if (normalized.startsWith('sky care')) return 'sky care';
-  return normalized || 'undefined';
-}
-
 function getMissionPieces(mission) {
   // Firestore uses `totalPieces` (as seen in the console). Fallbacks included just in case.
   const raw =
@@ -36,27 +28,39 @@ function clampMissionDisplayPieces(value) {
   return Number.isFinite(n) ? Math.max(0, n) : 0;
 }
 
-/** Returns [{ name, count }] for top missions by pieces, grouped by mission name. */
+function getPhotoMissionIds(photo) {
+  if (!Array.isArray(photo?.missions)) return [];
+  return photo.missions
+    .map((value) => String(value || '').trim())
+    .filter(Boolean);
+}
+
+function getMissionFilterMeta(missionId, missions) {
+  const id = String(missionId || '').trim();
+  const mission = missions?.[id] || {};
+  const rawName = String(mission?.name || '').trim();
+  return {
+    key: id,
+    name: rawName || `Mission ${id.slice(0, 8)}`
+  };
+}
+
+/** Returns [{ name, count }] for top missions by pieces. */
 function topMissionTotals(missions, photos, limit = 20, options = {}) {
   const useScopedCounts = options.useScopedCounts === true;
   missions = missions || {};
   photos = photos || {};
-  const byName = new Map(); // normalizedName -> { name, missionPieces, photoPieces }
+  const byId = new Map();
 
   for (const id of Object.keys(missions)) {
     const mission = missions[id];
     if (!mission || isMissionHidden(mission)) continue;
-    const rawName = String(mission?.name || '').trim();
-    const key = missionGroupKey(rawName);
+    const meta = getMissionFilterMeta(id, missions);
     const pieces = getMissionPieces(mission);
-    const defaultName = key === 'sky care' ? 'Sky Care' : (rawName || 'Unnamed mission');
-    const current = byName.get(key) || { name: defaultName, missionPieces: 0, photoPieces: 0 };
+    const current = byId.get(meta.key) || { name: meta.name, missionPieces: 0, photoPieces: 0 };
     current.missionPieces += pieces;
-    // Prefer a non-empty display name if we only had a placeholder.
-    if (key !== 'sky care' && (current.name === 'Unnamed mission' || current.name === 'undefined') && rawName) {
-      current.name = rawName;
-    }
-    byName.set(key, current);
+    if (meta.name) current.name = meta.name;
+    byId.set(meta.key, current);
   }
 
   for (const id of Object.keys(photos)) {
@@ -69,18 +73,14 @@ function topMissionTotals(missions, photos, limit = 20, options = {}) {
       const meta = getMissionFilterMeta(missionId, missions);
       if (seen.has(meta.key)) continue;
       seen.add(meta.key);
-      const key = meta.key;
-      const defaultName = key === 'sky care' ? 'Sky Care' : (meta.name || 'Unnamed mission');
-      const current = byName.get(key) || { name: defaultName, missionPieces: 0, photoPieces: 0 };
+      const current = byId.get(meta.key) || { name: meta.name, missionPieces: 0, photoPieces: 0 };
       current.photoPieces += pieces;
-      if (key !== 'sky care' && (current.name === 'Unnamed mission' || current.name === 'undefined') && meta.name) {
-        current.name = meta.name;
-      }
-      byName.set(key, current);
+      if (meta.name) current.name = meta.name;
+      byId.set(meta.key, current);
     }
   }
 
-  return [...byName.values()]
+  return [...byId.values()]
     .map((row) => ({
       name: row.name,
       count: clampMissionDisplayPieces(
@@ -92,24 +92,6 @@ function topMissionTotals(missions, photos, limit = 20, options = {}) {
     .slice(0, Math.max(0, limit | 0));
 }
 
-function getPhotoMissionIds(photo) {
-  if (!Array.isArray(photo?.missions)) return [];
-  return photo.missions
-    .map((value) => String(value || '').trim())
-    .filter(Boolean);
-}
-
-function getMissionFilterMeta(missionId, missions) {
-  const mission = missions?.[missionId] || {};
-  const rawName = String(mission?.name || '').trim();
-  if (rawName) {
-    const key = missionGroupKey(rawName);
-    const name = key === 'sky care' ? 'Sky Care' : rawName;
-    return { key, name };
-  }
-  return { key: `id:${missionId}`, name: `Mission ${String(missionId).slice(0, 8)}` };
-}
-
 function buildMissionFilterOptions(photos, missions) {
   photos = photos || {};
   missions = missions || {};
@@ -118,13 +100,18 @@ function buildMissionFilterOptions(photos, missions) {
   for (const id of Object.keys(missions)) {
     const mission = missions[id];
     if (!mission || isMissionHidden(mission)) continue;
-    const rawName = String(mission?.name || '').trim();
-    const key = missionGroupKey(rawName);
+    const meta = getMissionFilterMeta(id, missions);
     const pieces = getMissionPieces(mission);
-    const displayName = key === 'sky care' ? 'Sky Care' : (rawName || 'Unnamed mission');
-    const current = totals.get(key) || { key, name: displayName, missionPieces: 0, photoPieces: 0, photos: 0 };
+    const current = totals.get(meta.key) || {
+      key: meta.key,
+      name: meta.name,
+      missionPieces: 0,
+      photoPieces: 0,
+      photos: 0
+    };
     current.missionPieces += pieces;
-    totals.set(key, current);
+    if (meta.name) current.name = meta.name;
+    totals.set(meta.key, current);
   }
 
   for (const id of Object.keys(photos)) {
@@ -137,9 +124,16 @@ function buildMissionFilterOptions(photos, missions) {
       const meta = getMissionFilterMeta(missionId, missions);
       if (seen.has(meta.key)) continue;
       seen.add(meta.key);
-      const current = totals.get(meta.key) || { key: meta.key, name: meta.name, missionPieces: 0, photoPieces: 0, photos: 0 };
+      const current = totals.get(meta.key) || {
+        key: meta.key,
+        name: meta.name,
+        missionPieces: 0,
+        photoPieces: 0,
+        photos: 0
+      };
       current.photoPieces += pieces;
       current.photos += 1;
+      if (meta.name) current.name = meta.name;
       totals.set(meta.key, current);
     }
   }
@@ -169,9 +163,5 @@ function getMissionNameByFilterKey(missions, selectedMissionKey) {
   if (!selectedMissionKey) return 'All missions';
   const meta = buildMissionFilterOptions({}, missions).find((item) => item.key === selectedMissionKey);
   if (meta?.name) return meta.name;
-  for (const id of Object.keys(missions || {})) {
-    const candidate = getMissionFilterMeta(id, missions);
-    if (candidate.key === selectedMissionKey) return candidate.name;
-  }
-  return 'Selected mission';
+  return getMissionFilterMeta(selectedMissionKey, missions).name || 'Selected mission';
 }
