@@ -140,8 +140,16 @@ function renderMissionPartnerSnapshot(filtered, filters, missions) {
   if (brandsTitleEl) brandsTitleEl.textContent = `Top 10 brands for ${contextLabel}`;
   if (labelsTitleEl) labelsTitleEl.textContent = `Top 10 product types for ${contextLabel}`;
 
-  brandEl.innerHTML = buildTopListItems(topCategoryTotals(filtered, 'brand', 10));
-  labelEl.innerHTML = buildTopListItems(topCategoryTotals(filtered, 'label', 10));
+  brandEl.innerHTML = buildTopListItems(
+    typeof topCategoryTotalsForDisplay === 'function'
+      ? topCategoryTotalsForDisplay(filtered, 'brand', 10, filters, missions)
+      : topCategoryTotals(filtered, 'brand', 10)
+  );
+  labelEl.innerHTML = buildTopListItems(
+    typeof topCategoryTotalsForDisplay === 'function'
+      ? topCategoryTotalsForDisplay(filtered, 'label', 10, filters, missions)
+      : topCategoryTotals(filtered, 'label', 10)
+  );
 }
 
 function bindTopBrandsLabelsModal() {
@@ -164,8 +172,12 @@ function bindTopBrandsLabelsModal() {
 
   const openModal = (type) => {
     const filtered = typeof appState !== 'undefined' && appState ? appState.filteredPhotos : {};
+    const filters = typeof getFilterValues === 'function' ? getFilterValues() : null;
+    const missions = (typeof appState !== 'undefined' && appState?.missions) || {};
     const isBrand = type === 'brand';
-    const items = topCategoryTotals(filtered, type, 50);
+    const items = typeof topCategoryTotalsForDisplay === 'function'
+      ? topCategoryTotalsForDisplay(filtered, type, 50, filters, missions)
+      : topCategoryTotals(filtered, type, 50);
     titleEl.textContent = isBrand ? 'Top 50 Brands' : 'Top 50 product types';
     listEl.innerHTML = buildTopListItems(items);
     lastFocused = document.activeElement;

@@ -403,7 +403,13 @@ function renderTimeSeries(filtered, filters, missions) {
   const modalTooltip = getElement(DOM_IDS.timeSeriesTooltipModal);
 
   if (!primarySvg) return;
-  const { granularity, points } = buildTimeSeriesPoints(filtered, filters);
+  let { granularity, points } = buildTimeSeriesPoints(filtered, filters);
+  const officialTarget = typeof getMissionOfficialPiecesTarget === 'function'
+    ? getMissionOfficialPiecesTarget(filters, missions)
+    : 0;
+  if (officialTarget > 0 && typeof scaleTimeSeriesPointsToOfficialTotal === 'function') {
+    points = scaleTimeSeriesPointsToOfficialTotal(points, officialTarget);
+  }
   const chartTitle = buildChartFilterDescription(filters, missions);
 
   const modalTitleEl = getElement(DOM_IDS.timeSeriesModalTitle);

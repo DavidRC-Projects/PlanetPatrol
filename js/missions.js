@@ -170,16 +170,60 @@ function getMissionNameByFilterKey(missions, selectedMissionKey) {
   return getMissionFilterMeta(selectedMissionKey, missions).name || 'Selected mission';
 }
 
+/** True when a single mission is selected and it has an official totalPieces value. */
+function shouldUseMissionOfficialTotals(filters, missions) {
+  const missionKey = String(filters?.mission || '').trim();
+  if (!missionKey) return false;
+  if (typeof hasScopedPhotoFilters === 'function' && hasScopedPhotoFilters(filters)) return false;
+  return getMissionPieces(missions?.[missionKey]) > 0;
+}
+
+function getMissionOfficialPiecesTarget(filters, missions) {
+  if (!shouldUseMissionOfficialTotals(filters, missions)) return 0;
+  return getMissionPieces(missions?.[String(filters.mission).trim()]);
+}
+
+/** Scale piece counts so they sum to the official mission total while preserving proportions. */
+function scaleCountsToOfficialTotal(items, officialTarget) {
+  const rows = (items || []).map((item) => ({
+    ...item,
+    count: Math.max(0, Number(item?.count) || 0)
+  }));
+  const target = Math.max(0, Number(officialTarget) || 0);
+  const rawSum = rows.reduce((sum, row) => sum + row.count, 0);
+  if (!rows.length || !target || !rawSum || rawSum === target) return rows;
+
+  const scaled = rows.map((row) => ({
+    ...row,
+    count: Math.floor((row.count * target) / rawSum)
+  }));
+  let remainder = target - scaled.reduce((sum, row) => sum + row.count, 0);
+  const order = [...scaled].sort((a, b) => b.count - a.count || String(a.name).localeCompare(String(b.name)));
+  for (let i = 0; i < order.length && remainder > 0; i += 1) {
+    order[i].count += 1;
+    remainder -= 1;
+  }
+  return scaled;
+}
+
+function scaleTimeSeriesPointsToOfficialTotal(points, officialTarget) {
+  const rows = (points || []).map((point) => ({ name: point.key, count: point.pieces }));
+  const scaled = scaleCountsToOfficialTotal(rows, officialTarget);
+  return scaled.map((row, index) => ({
+    ...points[index],
+    pieces: row.count
+  }));
+}
+
+function topCategoryTotalsForDisplay(photos, fieldName, limit, filters, missions) {
+  const items = topCategoryTotals(photos, fieldName, limit);
+  if (!shouldUseMissionOfficialTotals(filters, missions)) return items;
+  return scaleCountsToOfficialTotal(items, getMissionOfficialPiecesTarget(filters, missions));
+}
+
 /** Prefer official mission totalPieces unless other filters narrow the photo set. */
 function getFilteredPiecesDisplayTotal(filtered, filters, missions) {
-  const missionKey = String(filters?.mission || '').trim();
-  if (
-    missionKey &&
-    typeof hasScopedPhotoFilters === 'function' &&
-    !hasScopedPhotoFilters(filters)
-  ) {
-    const official = getMissionPieces(missions?.[missionKey]);
-    if (official > 0) return official;
-  }
+  const official = getMissionOfficialPiecesTarget(filters, missions);
+  if (official > 0) return official;
   return sumTotalPieces(filtered);
 }

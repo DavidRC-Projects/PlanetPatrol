@@ -58,3 +58,21 @@ test('official mission total is used when only mission filter is active', () => 
   const row = leaderboard.find((item) => item.name === 'Sky Cares Mission 2026');
   assert.equal(row?.count, 789);
 });
+
+test('category and time-series counts scale to official mission total', () => {
+  const ctx = loadMissions();
+  const missionId = 'mission-a';
+  const missions = { [missionId]: { name: 'Test Mission', totalPieces: 100, hidden: false } };
+  const filters = { mission: missionId };
+  const photos = {
+    p1: { missions: [missionId], categories: [{ brand: 'A', number: 60 }, { label: 'X', number: 60 }] },
+    p2: { missions: [missionId], categories: [{ brand: 'B', number: 40 }, { label: 'Y', number: 40 }] }
+  };
+  const brands = ctx.topCategoryTotalsForDisplay(photos, 'brand', 10, filters, missions);
+  assert.equal(brands.reduce((sum, row) => sum + row.count, 0), 100);
+  const points = ctx.scaleTimeSeriesPointsToOfficialTotal(
+    [{ key: '2026', pieces: 60, photos: 1 }, { key: '2027', pieces: 40, photos: 1 }],
+    100
+  );
+  assert.equal(points.reduce((sum, row) => sum + row.pieces, 0), 100);
+});

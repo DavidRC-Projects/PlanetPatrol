@@ -255,7 +255,11 @@ function openPieChartModal(type) {
   titleEl.textContent = buildPieChartTitle(type);
 
   const filtered = (typeof appState !== 'undefined' && appState?.filteredPhotos) || {};
-  const allItems = topCategoryTotals(filtered, type, 100);
+  const filters = typeof getFilterValues === 'function' ? getFilterValues() : null;
+  const missions = (typeof appState !== 'undefined' && appState?.missions) || {};
+  const allItems = typeof topCategoryTotalsForDisplay === 'function'
+    ? topCategoryTotalsForDisplay(filtered, type, 100, filters, missions)
+    : topCategoryTotals(filtered, type, 100);
   const items =
     allItems.length <= PIE_SLICE_LIMIT
       ? allItems
