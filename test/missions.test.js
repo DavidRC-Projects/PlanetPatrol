@@ -7,9 +7,13 @@ const path = require('node:path');
 function loadMissions() {
   const missionsSrc = fs.readFileSync(path.join(__dirname, '../js/missions.js'), 'utf8');
   const photoHelpersSrc = fs.readFileSync(path.join(__dirname, '../js/photo-helpers.js'), 'utf8');
+  const filterRulesSrc = fs.readFileSync(path.join(__dirname, '../js/filter-rules.js'), 'utf8');
+  const statsSrc = fs.readFileSync(path.join(__dirname, '../js/stats.js'), 'utf8');
   const context = { module: {}, exports: {} };
   vm.createContext(context);
   vm.runInContext(photoHelpersSrc, context);
+  vm.runInContext(statsSrc, context);
+  vm.runInContext(filterRulesSrc, context);
   vm.runInContext(missionsSrc, context);
   return context;
 }
@@ -36,4 +40,21 @@ test('mission filter keys are unique per mission id', () => {
   const options = ctx.buildMissionFilterOptions({}, missions);
   assert.equal(options.length, 2);
   assert.notEqual(options[0].key, options[1].key);
+});
+
+test('official mission total is used when only mission filter is active', () => {
+  const ctx = loadMissions();
+  const missionId = '0xB4Mksz1fAzVXD5MVPO';
+  const missions = {
+    [missionId]: { name: 'Sky Cares Mission 2026', totalPieces: 789, hidden: false }
+  };
+  const photos = {
+    p1: { missions: [missionId], pieces: 500 },
+    p2: { missions: [missionId], pieces: 311 }
+  };
+  const filters = { mission: missionId };
+  assert.equal(ctx.getFilteredPiecesDisplayTotal(photos, filters, missions), 789);
+  const leaderboard = ctx.topMissionTotals(missions, photos, 20, { useScopedCounts: false });
+  const row = leaderboard.find((item) => item.name === 'Sky Cares Mission 2026');
+  assert.equal(row?.count, 789);
 });

@@ -12,7 +12,7 @@ function escapeHtml(value) {
 }
 
 /** Updates summary cards. */
-function renderCards(filtered) {
+function renderCards(filtered, filters, missions) {
   filtered = filtered || {};
   const ids = [
     DOM_IDS.totalPieces,
@@ -26,7 +26,7 @@ function renderCards(filtered) {
   const els = getElements(ids);
   if (!ids.every((id) => els[id])) return;
 
-  els[DOM_IDS.totalPieces].textContent = sumTotalPieces(filtered);
+  els[DOM_IDS.totalPieces].textContent = getFilteredPiecesDisplayTotal(filtered, filters, missions);
   els[DOM_IDS.unmoderatedPieces].textContent = sumUnmoderatedPieces(filtered);
   els[DOM_IDS.moderated].textContent = countModerated(filtered);
   els[DOM_IDS.unmoderated].textContent = countUnmoderated(filtered);
@@ -111,7 +111,7 @@ function renderMissionLeaderboard(missions, photos, filters) {
   const tableEl = getElement(DOM_IDS.topMissionsList);
   if (!tableEl) return;
   const useScopedCounts =
-    typeof hasActivePhotoFilters === 'function' && hasActivePhotoFilters(filters);
+    typeof hasScopedPhotoFilters === 'function' && hasScopedPhotoFilters(filters);
   const items = topMissionTotals(missions, photos, 20, { useScopedCounts });
   tableEl.innerHTML = buildMissionTableRows(items);
 
@@ -480,7 +480,7 @@ function bindRecordDetailModal() {
 
 /** Renders all filtered dashboard sections. */
 async function renderFilteredView(filtered, filters, missions, allPhotos) {
-  renderCards(filtered);
+  renderCards(filtered, filters, missions);
   renderTimeSeries(filtered, filters, missions);
   renderMissionLeaderboard(missions, filtered, filters);
   renderMissionPartnerSnapshot(filtered, filters, missions);

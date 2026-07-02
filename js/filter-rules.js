@@ -63,3 +63,48 @@ function hasActivePhotoFilters(values) {
     String(values.brandLabelSearch || '').trim()
   );
 }
+
+/** True when filters narrow beyond mission alone (date, location, status, search, etc.). */
+function hasScopedPhotoFilters(values) {
+  if (!values) return false;
+  return !!(
+    values.country ||
+    values.constituency ||
+    values.year ||
+    values.month ||
+    values.day ||
+    (values.status && values.status !== 'all') ||
+    String(values.brandLabelSearch || '').trim()
+  );
+}
+
+/**
+ * Matches Plastic Patrol mission totalPieces: pending photos plus published;
+ * excludes moderated submissions that were not published.
+ */
+function passesMissionOfficialCountFilter(photo) {
+  if (photo?.moderated == null) return true;
+  if (typeof photo?.published === 'boolean') return photo.published;
+  if (typeof photo?.published === 'string') {
+    const normalized = photo.published.trim().toLowerCase();
+    if (normalized === 'true') return true;
+    if (normalized === 'false') return false;
+  }
+  return true;
+}
+
+function shouldApplyMissionOfficialCountFilter(missionKey, missions, status, country, constituency, year, month, day, brandLabelSearch) {
+  if (!missionKey) return false;
+  const mission = missions?.[missionKey];
+  const official = Number(mission?.totalPieces);
+  if (!Number.isFinite(official) || official <= 0) return false;
+  return !(
+    country ||
+    constituency ||
+    year ||
+    month ||
+    day ||
+    (status && status !== 'all') ||
+    String(brandLabelSearch || '').trim()
+  );
+}

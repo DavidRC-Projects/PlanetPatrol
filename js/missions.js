@@ -73,6 +73,8 @@ function topMissionTotals(missions, photos, limit = 20, options = {}) {
       const meta = getMissionFilterMeta(missionId, missions);
       if (seen.has(meta.key)) continue;
       seen.add(meta.key);
+      const official = getMissionPieces(missions?.[meta.key]);
+      if (official > 0 && !passesMissionOfficialCountFilter(photo)) continue;
       const current = byId.get(meta.key) || { name: meta.name, missionPieces: 0, photoPieces: 0 };
       current.photoPieces += pieces;
       if (meta.name) current.name = meta.name;
@@ -124,6 +126,8 @@ function buildMissionFilterOptions(photos, missions) {
       const meta = getMissionFilterMeta(missionId, missions);
       if (seen.has(meta.key)) continue;
       seen.add(meta.key);
+      const official = getMissionPieces(missions?.[meta.key]);
+      if (official > 0 && !passesMissionOfficialCountFilter(photo)) continue;
       const current = totals.get(meta.key) || {
         key: meta.key,
         name: meta.name,
@@ -164,4 +168,18 @@ function getMissionNameByFilterKey(missions, selectedMissionKey) {
   const meta = buildMissionFilterOptions({}, missions).find((item) => item.key === selectedMissionKey);
   if (meta?.name) return meta.name;
   return getMissionFilterMeta(selectedMissionKey, missions).name || 'Selected mission';
+}
+
+/** Prefer official mission totalPieces unless other filters narrow the photo set. */
+function getFilteredPiecesDisplayTotal(filtered, filters, missions) {
+  const missionKey = String(filters?.mission || '').trim();
+  if (
+    missionKey &&
+    typeof hasScopedPhotoFilters === 'function' &&
+    !hasScopedPhotoFilters(filters)
+  ) {
+    const official = getMissionPieces(missions?.[missionKey]);
+    if (official > 0) return official;
+  }
+  return sumTotalPieces(filtered);
 }

@@ -16,6 +16,10 @@ function filterPhotos(photos, locationDictionary, missions, country, constituenc
       }
     }
     if (!photoMatchesMissionKey(photo, mission, missions)) continue;
+    if (
+      shouldApplyMissionOfficialCountFilter(mission, missions, status, country, constituency, year, month, day, brandLabelSearch) &&
+      !passesMissionOfficialCountFilter(photo)
+    ) continue;
     if (!passesStatusFilter(photo, status)) continue;
     if (!passesDateFilter(photo, year, month, day)) continue;
     if (!passesBrandLabelFilter(photo, brandLabelSearch)) continue;
